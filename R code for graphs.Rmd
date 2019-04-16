@@ -1,0 +1,3171 @@
+---
+title: "clean graphs"
+author: "Jessica Susser"
+date: "3/21/2017"
+output: html_document
+---
+
+```{r}
+setwd("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/writing and communication/Thesis/results/graphs")
+```
+##useful shortcuts for functions
+```{r}
+##grey scale pallet
+gs_pallet <- scale_fill_manual(values = c("#FFFFFF", "#dddddd","#999999", "#535353"))
+cb_pallet <- scale_fill_manual(values = c("#999999", "#009E73", "#e79f00", "#9ad0f3", "#0072B2", "#D55E00", "#CC79A7", "#F0E442"))##imports a color-blind friendly color palette
+dodge <- position_dodge(width = 0.9)
+bw <- 0.8
+```
+#posters
+####microbial biomass v. treatment####
+
+```{r}
+dat1 <- subset(dat, micro.c != "NA") ## remove na values
+myData <- aggregate(dat1$micro.c, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+levels(myData$treatment)
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+ limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+cbPalette <- c("#999999", "#009E73", "#e79f00", "#9ad0f3", "#0072B2", "#D55E00", "#CC79A7", "#F0E442")##imports a color-blind friendly color palette
+
+p <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) ##sets up ggplot to 
+p + geom_bar (stat = "identity" , position = dodge, width = 0.8) + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 1.1) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_blank(), ##angle rotates text to perpindicular to axis, v.just moves font to center of bar, 
+              axis.ticks = element_line(colour = "black", size = 1),
+              axis.ticks.length = unit(0.5, "cm"), ##changes the length of the axis ticks
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major = element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), ##for some reason the background default is grey
+              legend.position = "none") + ##gets rid of the plot legend
+        labs(x = "Treatment", y = "Microbial biomass C \n (µg C/g dry soil)") + ##labels the axes
+        scale_fill_manual(values=cbPalette)  + 
+        scale_y_continuous(expand = c(0,1)) ##forces y axis to start at 0
+
+```
+
+#stuff
+##microbial respiration by treatment
+```{r}
+dat1 <- subset(dat, co2 != "NA") ## remove na values
+myData <- aggregate(dat1$co2, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+levels(myData$treatment)
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+cbPalette <- c("#999999", "#009E73", "#e79f00", "#9ad0f3", "#0072B2", "#D55E00", "#CC79A7", "#F0E442")##imports a color-blind friendly color palette
+
+p <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) ##sets up ggplot to 
+p + geom_bar (stat = "identity" , position = dodge, width = 0.8) + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 1.1) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_blank(), ##angle rotates text to perpindicular to axis, v.just moves font to center of bar, 
+              axis.ticks = element_line(colour = "black", size = 1),
+              axis.ticks.length = unit(0.5, "cm"), ##changes the length of the axis ticks
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major = element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), ##for some reason the background default is grey
+              legend.position = "none") + ##gets rid of the plot legend
+        labs(x = "Treatment", y = "Microbial biomass C \n (µg C/g dry soil)") + ##labels the axes
+        scale_fill_manual(values=cbPalette)  + 
+        scale_y_continuous(expand = c(0,1)) ##forces y axis to start at 0
+
+```
+
+
+##Arthropod biomass by treatment
+
+
+```{r}
+dat1 <- com
+myData <- aggregate(dat1$abundance, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+levels(myData$treatment)
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+cbPalette <- c("#999999", "#009E73", "#e79f00", "#9ad0f3", "#0072B2", "#D55E00", "#CC79A7", "#F0E442") ##imports a color-blind friendly color palette
+
+p <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) ##sets up ggplot to 
+p + geom_bar (stat = "identity" , position = dodge, width = 0.8) + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 1.1) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_blank(), ##angle rotates text to perpindicular to axis, v.just moves font to center of bar, 
+              axis.ticks = element_line(colour = "black", size = 1),
+              axis.ticks.length = unit(0.5, "cm"), ##changes the length of the axis ticks
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major = element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), ##for some reason the background default is grey
+              legend.position = "none") + ##gets rid of the plot legend
+        labs(x = "Treatment", y = "Microbial biomass C \n (µg C/g dry soil)") + ##labels the axes
+        scale_fill_manual(values=cbPalette)  + 
+        scale_y_continuous(expand = c(0,0)) ##forces y axis to start at 0
+summary(aov(abundance~treatment, data =com.plot))
+plot(TukeyHSD(aov(abundance~treatment, data = com)))
+
+```
+
+
+
+
+##microbial biomass v. Olsen P
+
+```{r}
+myData <- dat
+pallet <- c("#78c679", "#238443", "#252525")
+
+p <- ggplot(data = myData, aes(x = co2, y = p.bicarb)) ##sets up ggplot to the desired data
+p + geom_point (aes(color = bout)) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,2)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,1))+ ##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+scale_color_manual(values = pallet)
+
+summary(lm(p.bicarb~co2, data = dat))
+```
+
+
+##p.total v. co2
+```{r}
+myData <- dat
+pallet <- c("#78c679", "#238443", "#252525")
+
+p <- ggplot(data = myData, aes(x = co2, y = p.total)) ##sets up ggplot to the desired data
+p + geom_point ((aes(color = bout))) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,2)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1))+ ##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+scale_color_manual(values = pallet)
+
+summary(lm(p.total~co2, data = dat))
+```
+
+##p.h2o v. co2
+```{r}
+myData <- dat
+pallet <- c("#78c679", "#238443", "#252525")
+
+p <- ggplot(data = myData, aes(x = co2, y = p.h2o)) ##sets up ggplot to the desired data
+p + geom_point ((aes(color = bout))) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,2)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1))+ ##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+scale_color_manual(values = pallet)
+
+summary(lm(p.h2o~co2, data = dat))
+```
+
+
+
+##proportion of p that is water-extractable by microbial activity
+```{r}
+myData <- dat
+pallet <- c("#78c679", "#238443", "#252525")
+
+p <- ggplot(data = myData, aes(x = co2, y = p.h2o/p.total)) ##sets up ggplot to the desired data
+p + geom_point ((aes(color = bout))) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,2)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_color_manual(values = pallet)
+
+summary(lm(p.h2o~co2, data = dat))
+```
+
+##proportion phosphorus that is bicarbonate extractable by respiration
+```{r}
+myData <- dat
+pallet <- c("#78c679", "#238443", "#252525")
+
+p <- ggplot(data = myData, aes(x = co2, y = p.bicarb/p.total)) ##sets up ggplot to the desired data
+p + geom_point ((aes(color = bout))) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,2)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_color_manual(values = pallet)
+
+summary(lm(p.bicarb/p.total~co2, data = dat))
+```
+
+
+##change in p.total by average respiration
+```{r}
+myData <- dc.plot
+pallet <- c("#78c679", "#238443", "#252525")
+
+p <- ggplot(data = myData, aes(x = co2, y = p.total.end - p.total.begin)) ##sets up ggplot to the desired data
+p + geom_point () +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,2)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_color_manual(values = pallet)
+
+summary(lm(p.total.end - p.total.begin~co2, data = dc.plot))
+```
+
+##invert v. p.bicarb
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = abundance, y = p.bicarb)) ##sets up ggplot to the desired data
+p + geom_point () +  ##creates a dot plot, shape indicates the type of dot.
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,0.3)) +
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,1)) ##forces y axis to start at 0
+summary(lm(p.bicarb~abundance, data = dc.plot))
+```
+
+##h2o p v. invert abundance
+
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = abundance, y = p.h2o)) ##sets up ggplot to the desired data
+p + geom_point () + ##creates a dot plot, shape indicates the type of dot.
+         geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis title
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,0.3)) +
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,1)) ##forces y axis to start at 0
+summary(lm(p.h2o~abundance, data = dc.plot))
+
+```
+
+
+
+##invert activity v. total p
+
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = abundance, y = (p.total.begin + p.total.end)/2)) ##sets up ggplot to the desired data
+p + geom_point () + ##creates a dot plot, shape indicates the type of dot.
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis title
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,0.3)) +
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,1)) ##forces y axis to start at 0
+summary(lm((p.total.begin + p.total.end)/2~abundance, data = dc.plot))
+
+```
+
+```{r}
+ggsave("p.total_abundance.png")
+```
+
+
+##invertebrate activity v. proportion of p in water
+
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = abundance, y = p.h2o/((p.total.begin + p.total.end)/2))) ##sets up ggplot to the desired data
+p + geom_point () + ##creates a dot plot, shape indicates the type of dot.
+         geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis title
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,0.3)) +
+        labs(x = "microbial biomass", y = "p.bicarb") ##labels the axes
+summary(lm(p.h2o/((p.total.begin + p.total.end)/2)~abundance, data = dc.plot))
+
+```
+
+```{r}
+ggsave("prop.ph2o_abundance.png")
+```
+
+##proportion of p in bicarb v. activity
+
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = abundance, y = p.bicarb/((p.total.begin + p.total.end)/2))) ##sets up ggplot to the desired data
+p + geom_point () + ##creates a dot plot, shape indicates the type of dot.
+         geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis title
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) ##for some reason the background default is grey
+
+summary(lm(p.bicarb/((p.total.begin + p.total.end)/2)~abundance, data = dc.plot))
+
+```
+
+```{r}
+ggsave("prop.bicarb_abundance.png")
+```
+
+##change in olsen P v. abundance
+
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = abundance, y = p.bicarb.change)) ##sets up ggplot to the desired data
+p + geom_point () + ##creates a dot plot, shape indicates the type of dot.
+         geom_smooth(method = lm, se = F) + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis title
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) ##for some reason the background default is grey
+summary(lm(p.bicarb.change~abundance, data = dc.plot))
+
+
+```
+
+```{r}
+ggsave("p.bicarb.change_abundance.png")
+```
+
+##change in olsen P by respiration
+```{r}
+myData <- dc.plot
+
+p <- ggplot(data = myData, aes(x = co2, y = p.bicarb.change)) ##sets up ggplot to the desired data
+p + geom_point () + ##creates a dot plot, shape indicates the type of dot.
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis title
+              axis.text.x  = element_text(size=18, color = "black"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=18, color = "black"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) ##for some reason the background default is grey
+summary(lm(p.total.end - p.total.begin~abundance, data = dc.plot))
+
+```
+
+```{r}
+ggsave("p.bicarb.change_co2.png")
+```
+
+##change in p.bicarb by treatment
+
+```{r}
+dat1 <- subset(dat, p.bicarb != "NA") ## remove na values
+myData <- aggregate(dat1$p.bicarb, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+###orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+levels(myData$treatment)
+
+###creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+cbPalette <- c("#999999", "#009E73", "#e79f00", "#9ad0f3", "#0072B2", "#D55E00", "#CC79A7", "#F0E442")##imports a color-blind friendly color palette
+
+p <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) ##sets up ggplot to 
+p + geom_bar (stat = "identity" , position = dodge, width = 0.8) + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 1.1) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_blank(), ##angle rotates text to perpindicular to axis, v.just moves font to center of bar, 
+              axis.ticks = element_line(colour = "black", size = 1),
+              axis.ticks.length = unit(0.5, "cm"), ##changes the length of the axis ticks
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis
+              axis.text.y = element_text(size=36, color = "black"), panel.grid.major = element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), ##for some reason the background default is grey
+              legend.position = "none") + ##gets rid of the plot legend
+        labs(x = "Treatment", y = "Microbial biomass C \n (µg C/g dry soil)") + ##labels the axes
+        scale_fill_manual(values=cbPalette)  + 
+        scale_y_continuous(expand = c(0,0)) + ##forces y axis to start at 0
+        scale_color_manual(values = pallet)
+```
+
+```{r}
+ggsave("p.bicarb.change_treatment.png")
+```
+
+
+
+
+#SERA17
+##theme for bar graphs for power point
+```{r}
+ppbar_theme <- function (base_size = 24, base_family = "Calibri") {
+  theme(
+    line = element_line(color = "black", size = 0.5, linetype = 1, lineend = "butt"),
+    rect = element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1), 
+    text = element_text(family = base_family, 
+                       face = "plain", 
+                       color = "black", 
+                       size = base_size,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+    axis.text = element_text(size = 20, color = "black"), 
+    strip.text = element_text(size = base_size), 
+    axis.line = element_line(colour = "black"), 
+    axis.text.x = element_blank(), 
+    axis.text.y = element_text(hjust = 1,  margin = margin(t = 0, r = 4, b = 0, l = 0), size = base_size), 
+    axis.ticks = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.title.y = element_text(hjust = 0.5, 
+                                angle = 90, 
+                                margin = margin(t = 0, r = 10, b = 0, l = 0)), 
+    axis.ticks.length = unit(0.15, "cm"), 
+    
+  legend.background = element_rect(), 
+  legend.key = element_rect(fill = NA, colour = "white"),
+  legend.key.size = unit(0.8, "lines"), 
+  legend.key.height = NULL,
+  legend.key.width = NULL, 
+  legend.text = element_text(size = 14),
+  legend.text.align = NULL,
+  legend.title = element_blank(),
+  legend.title.align = NULL, 
+  legend.position = c(0.82,0.7), ##legend position "none" gets rid of the legend. Change to right, left, top, or bottom or corridinates for custom position
+  legend.direction = NULL,
+  legend.justification = "center", 
+  legend.box = NULL, 
+
+    panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+
+    strip.background = element_rect(fill = "grey80", colour = NA), 
+    strip.text.x = element_text(), 
+    strip.text.y = element_text(angle = -90), 
+    
+    plot.background = element_blank(), 
+    plot.title = element_text(face = "bold",
+                              hjust = 0,
+                              margin = margin(t = 0, r = 0, b = 10, l = 0)), 
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "lines"), complete = TRUE)
+}
+
+```
+##theme for xyplots powerpoint
+```{r}
+ppxy_theme <- function (base_size = 20, base_family = "Calibri") {
+  theme(
+    line = element_line(color = "black", size = 0.5, linetype = 1, lineend = "butt"),
+    rect = element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1), 
+    text = element_text(family = base_family, 
+                       face = "plain", 
+                       color = "black", 
+                       size = base_size,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+    axis.text = element_text(size = 16, color = "black"), 
+    strip.text = element_text(size = base_size), 
+    axis.line = element_line(colour = "black"), 
+    axis.ticks = element_line(),
+    axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)), 
+    axis.title.y = element_text(hjust = 0.5, 
+                                angle = 90, 
+                                margin = margin(t = 0, r = 10, b = 0, l = 0)), 
+    axis.ticks.length = unit(0.15, "cm"), 
+    
+  legend.background = element_rect(), 
+  legend.key = element_rect(fill = NA, colour = "white"),
+  legend.key.size = unit(0.8, "lines"), 
+  legend.key.height = NULL,
+  legend.key.width = NULL, 
+  legend.text = element_text(size = 14),
+  legend.text.align = NULL,
+  legend.title = element_blank(),
+  legend.title.align = NULL, 
+  legend.position = "none", ##legend position "none" gets rid of the legend. Change to right, left, top, or bottom or corridinates for custom position
+  legend.direction = NULL,
+  legend.justification = "center", 
+  legend.box = NULL, 
+
+    panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+
+    strip.background = element_rect(fill = "grey80", colour = NA), 
+    strip.text.x = element_text(), 
+    strip.text.y = element_text(angle = -90), 
+    
+    plot.background = element_blank(), 
+    plot.title = element_text(face = "bold",
+                              hjust = 0,
+                              margin = margin(t = 0, r = 0, b = 10, l = 0)), 
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "lines"), complete = TRUE)
+}
+
+```
+
+
+
+##microbial respiration by treatment
+```{r}
+##get the data into a format that can be easily graphed
+dat1 <- subset(dat, co2 != "NA") ## remove na values
+myData <- aggregate(dat1$co2, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))         ##creates dataframe for 
+##creating the graph
+co2 <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits,    ##sets error bars to limits, specified above
+                      position = dodge,   ##positions error bars
+                      width = 0.15, size = 0.5) + ##width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        ppbar_theme()+
+         #guides(fill = guide_legend(override.aes = list(colour = NULL))) + ##if I want to add a legend, this gets rid of the slash bars in the boxes
+        #theme(legend.key = element_rect(colour = "black"))+ ##this adds back the legend outlines after removing the black lines above
+        cb_palette + 
+        scale_y_continuous(expand = c(0,0), limits = c(0, 20 + max(myData$mean + myData$se))) + ##expand = c(0,0) forces the y axis to start at zero, the limits argument sets the min and max of the axis, increasing the upperlimt to just above the top of the largest error bar ensures that the error bar doesn't get clipped
+        labs ( y =bquote('µg' ~CO[2]~ '- C' ~g^-1~day^-1*'')) +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y =( myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "b", "ab"),##says what the lables should be
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  ##positions labels
+                vjust = -0.5, ##adjustst text so it's just above error bars. For some reason  negative values go up
+                size = 18 * (5/14)) +  ## text in geom_text is not the same size as theme, the 5/18 scales it to the same size as theme  
+        theme(legend.position = c(0.25, 0.7))
+co2
+
+tiff("co2_treat_SERA.tiff",                    ##set up a .tiff file called TEST.tiff
+     width = 5.74, height = 3.42, unit = "in",    ##sets the width and height of the file and specifies the unit, can be "in", "cm" or "mm"
+     res = 600)                        ##sets the resolution of the graph
+co2             ##specifies the graph you want to print
+dev.off() 
+```
+
+##single-pannel plot of just arthropod activity by treatment
+```{r}
+dat1 <- subset(com, abundance != "NA")
+myData <- aggregate(dat1$abundance, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)
+
+aa <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits, 
+                      position = dodge, 
+                      width = 0.15, 
+                      size = 0.5) + 
+        ppbar_theme() +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 7.5)) + 
+        labs ( y = "Mean captures per day") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y =( myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),##says what the lables should be
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  ##positions labels
+                vjust = -0.5, ##adjustst text so it's just above error bars. For some reason  negative values go up
+                size = 18 * (5/14)) +  #
+        theme(legend.position = "none")
+aa
+tiff("activity_SERA.tiff",                    ##set up a .tiff file called TEST.tiff
+     width = 5.74, height = 3.42, unit = "in",    ##sets the width and height of the file and specifies the unit, can be "in", "cm" or "mm"
+     res = 600)                        ##sets the resolution of the graph
+aa            ##specifies the graph you want to print
+dev.off()
+```
+##multi-pannel of arthropod activity by treatment
+###Arthropod activity by treatment
+```{r}
+dat1 <- subset(com, abundance != "NA")
+myData <- aggregate(dat1$abundance, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)
+
+aa <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits, 
+                      position = dodge, 
+                      width = 0.15, 
+                      size = 0.5) + 
+        ppbar_theme() +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 10)) + 
+        labs ( y = "Mean captures per day") +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData$mean + myData$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14*2))) +  
+        theme(legend.position = "none")+
+        ggtitle("Total Fauna Activity")
+```
+
+###herbivore
+```{r}
+dat2 <- subset(group, herbivore != "NA") ## remove na values
+myData2 <- aggregate(dat2$herbivore, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+
+ha <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits2, 
+                      position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        ppbar_theme() +
+        theme(legend.position = "none") +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 1.5)) + 
+        labs ( y = "Mean captures per day") +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData2$mean + myData2$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14*2))) + 
+        ggtitle("Herbivore Activity") +
+        theme(axis.title.y = element_blank())
+
+```
+###predator
+```{r}
+dat3 <- subset(group, predator != "NA") ## remove na values
+myData3 <- aggregate(dat3$predator, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, ymin = myData3$mean - myData3$se)##creates limits for errorbars
+pa <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits3, 
+                      position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        ppbar_theme() +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 4)) + 
+        labs ( y = "Mean captures per day") +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData3$mean + myData3$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14*2))) +  
+        theme(legend.position = "none") +
+        ggtitle("Predator Activity")
+
+```
+
+###scavenger
+```{r}
+dat4 <- subset(group, scavenger != "NA") ## remove na values
+myData4 <- aggregate(dat4$scavenger, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits4 <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+sa <- ggplot(data = myData4, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits4, 
+                      position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        ppbar_theme() +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 2)) + 
+        labs ( y = "Mean captures per day") +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData4$mean + myData4$se),
+                        label = c("a", "ab", "ab", "b"),
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14*2))) +  
+        theme(legend.position = "none",
+              axis.title.y = element_blank()) +
+        ggtitle("Scavenger Activity")
+```
+
+##make a multi-pannel plot of the arthropod activities
+```{r}
+tiff("fauna_treat_SERA.tiff",                    
+     width = 5.74, height = 3.42, unit = "in",    
+     res = 600)                        
+ggarrange(aa, ha, pa, sa,
+          ncol = 2, nrow = 2, ##number of columns and rows
+          align = "v") 
+dev.off()
+```
+
+##multipannel of Olsen and microbial P pools by treatment
+###Olsen P
+```{r}
+dat1 <- subset(dat.plot, p.bicarb != "NA") ## remove na values
+myData1 <- aggregate(dat1$p.bicarb, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData1 <- do.call(data.frame, myData1) ##rearranges dataframe
+myData1$se <- myData1$x.sd / sqrt(as.numeric(myData1$x.n)) ##calculates SE
+colnames(myData1) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData1$treatment <- ordered(myData1$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData1$names <- factor(myData1$treatment, levels = myData1$treatment[order(myData1$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits1 <- aes(ymax = myData1$mean + myData1$se, ymin = myData1$mean - myData1$se)##creates limits for errorbars
+op <- ggplot(data = myData1, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits1, 
+                      position = dodge, 
+                      width = 0.15, 
+                      size = 0.5) + 
+        ppbar_theme() +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 7)) + 
+        labs (y =bquote('µg' ~PO[4]^-3~ '- P' ~g^-1~'')) +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData1$mean + myData1$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14))) +  
+        ggtitle("Olsen P") +
+        theme(legend.position = "none")
+op
+```
+
+###Microbial biomass P
+```{r}
+dat4 <- subset(dat, micro.p != "NA") ## remove na values
+myData4 <- aggregate(dat4$micro.p, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+mbp <- ggplot(data = myData4, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits, 
+                      position = dodge, 
+                      width = 0.15, 
+                      size = 0.5) + 
+        ppbar_theme() +
+        theme(legend.position = "none")+
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 1.5)) + 
+        labs (y =bquote('µg' ~PO[4]^-3~ '- P' ~g^-1~'')) +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData4$mean + myData4$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Calibri"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14))) +  
+        ggtitle("Microbial \n Biomass P") +
+        theme(axis.title.y = element_blank())
+        mbp
+ 
+
+```
+###single pannel of just microbial P
+```{r}
+dat4 <- subset(dat, micro.p != "NA") ## remove na values
+myData4 <- aggregate(dat4$micro.p, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+mbp <- ggplot(data = myData4, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits, 
+                      position = dodge, 
+                      width = 0.15, 
+                      size = 0.5) + 
+        ppbar_theme() +
+        cb_palette  + 
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, 4)) + 
+        labs (y =bquote('µg' ~PO[4]^-3~ '- P' ~g^-1~'')) +
+        geom_text(                                         
+                aes(
+                        x = names,                             
+                        y =( myData4$mean + myData4$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),  
+                vjust = -0.5, 
+                size = 18 * (5/(14))) +  
+        ggtitle("Microbial Biomass P") +
+        theme(axis.title.y = element_blank())
+        mbp
+```
+
+###make multi-pannel plot of microbe and olsen P
+```{r}
+tiff("P_treat_SERA.tiff",                    
+     width = 6, height = 3.42, unit = "in",    
+     res = 600)   
+ggarrange(op, mbp,
+          ncol = 2, nrow = 1) ##number of columns and rows
+dev.off()
+```
+
+
+##multi-pannel of activities v. olsen P
+###Olsen P v. microbial biomass
+```{r}
+myData <- subset(dc.plot, !is.na(p.bicarb) & !is.na(co2))
+mbop <- ggplot(data = myData, aes(x = co2, y = p.bicarb)) +  ##sets up ggplot to the desired data
+        geom_point ((aes())) +  ##creates a dot plot, shape indicates the type of dot.
+        ppxy_theme() +
+        labs(y = "Olsen P",x = "Microbial Respiration") + ##labels the axes
+        scale_y_continuous(expand = c(0,1)) + ##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+        scale_x_continuous(expand = c(0, 3)) +
+        ggtitle("Microbial Activity")
+mbop
+```
+
+###Olsen P v. invertebrate activity
+```{r}
+myData2 <- subset(dc.plot, !is.na(p.bicarb) & !is.na(abundance))
+iaop <- ggplot(data = myData2, aes(x = abundance/4, y = p.bicarb)) +  ##sets up ggplot to the desired data
+        geom_point ((aes())) +  ##creates a dot plot, shape indicates the type of dot.
+        ppxy_theme() +
+        labs(y = "Olsen P",x = "Faunal Capture") + ##labels the axes
+        scale_y_continuous(expand = c(0,1)) + ##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+        scale_x_continuous(expand = c(0, 0.2)) +
+        theme(axis.title.y = element_blank()) +
+        ggtitle("Faunal Activity")
+iaop
+```
+###putting the pannels together
+```{r}
+tiff("activity_P_SERA.tiff",                    
+     width = 5.74, height = 3.28, unit = "in",    
+     res = 600)   
+ggarrange(mbop, iaop,
+          ncol = 2, nrow = 1, ##number of columns and rows
+          widths = c(3.10, 3.0))
+dev.off()
+```
+
+
+#thesis
+##Thesis theme for xyplots
+```{r}
+xy_theme <- function (base_size = 12, base_family = "Times New Roman") {
+  theme(
+    line = element_line(color = "black", size = 0.5, linetype = 1, lineend = "butt"),
+    rect = element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1), 
+    text = element_text(family = base_family, 
+                       face = "plain", 
+                       color = "black", 
+                       size = base_size,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+    axis.text = element_text(size = base_size, color = "black"), 
+    strip.text = element_text(size = base_size), 
+    axis.line = element_line(colour = "black"), 
+    axis.ticks = element_line(),
+    axis.ticks.length = unit(0.15, "cm"),
+    axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)), 
+    axis.title.y = element_text(hjust = 0.5, 
+                                angle = 90, 
+                                margin = margin(t = 0, r = 10, b = 0, l = 0)), 
+ 
+    
+  legend.background = element_rect(), 
+  legend.key = element_rect(fill = NA, 
+                            colour = "white"),
+  legend.key.size = unit(0.8, "lines"), 
+  legend.key.height = NULL,
+  legend.key.width = NULL, 
+  legend.text = element_text(size = 12),
+  legend.text.align = NULL,
+  legend.title = element_blank(),
+  legend.title.align = NULL, 
+  legend.position = "none", ##legend position "none" gets rid of the legend. Change to right, left, top, or bottom or corridinates for custom position
+  legend.direction = NULL,
+  legend.justification = "center", 
+  legend.box = NULL, 
+
+    panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+
+    strip.background = element_rect(fill = "grey80", colour = NA), 
+    strip.text.x = element_text(), 
+    strip.text.y = element_text(angle = -90), 
+    
+    plot.background = element_blank(), 
+    plot.title = element_text(face = "bold",
+                              hjust = 0,
+                              margin = margin(t = 0, r = 0, b = 10, l = 0)), 
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "lines"), complete = TRUE)
+}
+```
+
+##thesis theme for bar graphs
+
+```{r}
+bar_theme <- function (base_size = 12, base_family = "Times New Roman") {
+  theme(
+    line = element_line(color = "black", size = 0.5, linetype = 1, lineend = "butt"),
+    rect = element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1), 
+    text = element_text(family = base_family, 
+                       face = "plain", 
+                       color = "black", 
+                       size = base_size,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+    axis.text = element_text(size = base_size, color = "black"), 
+    strip.text = element_text(size = base_size), 
+    axis.line = element_line(colour = "black"), 
+    axis.text.y = element_text(hjust = 1,  margin = margin(t = 0, r = 4, b = 0, l = 0)),
+    axis.text.x = element_blank(),
+    axis.ticks = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.title.y = element_text(hjust = 0.5, 
+                                angle = 90, 
+                                margin = margin(t = 0, r = 10, b = 0, l = 0)), 
+    axis.ticks.length = unit(0.15, "cm"), 
+    
+  legend.background = element_rect(), 
+  legend.key = element_rect(fill = NA, colour = "white"),
+  legend.key.size = unit(1, "lines"), 
+  legend.key.height = NULL,
+  legend.key.width = NULL, 
+  legend.text = element_text(size = rel(0.8)),
+  legend.text.align = NULL,
+  legend.title = element_blank(),
+  legend.title.align = NULL, 
+  legend.position = "none", ##legend position "none" gets rid of the legend. Change to right, left, top, or bottom or corridinates for custom position
+  legend.direction = NULL,
+  legend.justification = "center", 
+  legend.box = NULL, 
+
+    panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+
+    strip.background = element_rect(fill = "grey80", colour = NA), 
+    strip.text.x = element_text(), 
+    strip.text.y = element_text(angle = -90), 
+    
+    plot.background = element_blank(), 
+    plot.title = element_text(face = "bold",
+                              hjust = 0,
+                              margin = margin(t = 0, r = 0, b = 10, l = 0)), 
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "lines"), complete = TRUE)
+}
+
+```
+
+
+##microbial data by treatment
+###microbial respiration by treatment
+```{r}
+##get the data into a format that can be easily graphed
+dat1 <- subset(dat, co2 != "NA") ## remove na values
+myData <- aggregate(dat1$co2, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))         ##creates dataframe for 
+##creating the graph
+lim1 <- 150
+co2 <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits,    ##sets error bars to limits, specified above
+                      position = dodge,   ##positions error bars
+                      width = 0.15, size = 0.5) + 
+    bar_theme()+
+        theme(legend.position = "none") +
+        cb_pallet  + 
+         scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim1), breaks = c(0,lim1/3, lim1*(2/3), lim1))+ 
+        labs ( y =bquote('µg' ~CO[2]~ '- C' ~g^-1~day^-1*'')) +
+        ggtitle("b. Microbial Respiration") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "b", "b"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       ##positions labels
+co2
+```
+export the graph for the legend
+```{r}
+tiff("legend.tiff", width = 6, height = 1, unit = "in", res = 300)
+co2
+dev.off()
+```
+
+
+###microbial C by treatment
+```{r}
+dat2 <- subset(dat, micro.c != "NA") ## remove na values
+myData2 <- aggregate(dat2$micro.c, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+lim <- 210 
+mbc <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits2, position = dodge, width = 0.15, size = 0.5) + 
+    bar_theme()+
+         #guides(fill = guide_legend(override.aes = list(colour = NULL))) + ##if I want to add a legend, this gets rid of the slash bars in the boxes
+        #theme(legend.key = element_rect(colour = "black"))+ ##this adds back the legend outlines after removing the black lines above
+        cb_pallet  + 
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim), breaks = c(0,lim/3, lim*(2/3), lim)) + ##expand = c(0,0) forces the y axis to start at zero, the limits argument sets the min and max of the axis, increasing the upperlimt to just above the top of the largest error bar ensures that the error bar doesn't get clipped
+        labs ( y =bquote('µg C' ~g^-1~soil^-1*'')) + 
+        ggtitle("a. Microbial Biomass C") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y =( myData2$mean + myData2$se), ##puts labels above the error bars
+                        label = c("a", "a", "b", "b"),##says what the lables should be
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12 * (5/14))      ##positions labels
+mbc
+```
+
+
+
+###microbial N v. treatment
+```{r}
+dat3 <- subset(dat, micro.n != "NA") ## remove na values
+myData3 <- aggregate(dat3$micro.n, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, 
+               ymin = myData3$mean - myData3$se)##creates limits for errorbars
+lim3 <- 72
+mbn <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits3, position = dodge, width = 0.15, size = 0.5) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+    bar_theme()+
+         #guides(fill = guide_legend(override.aes = list(colour = NULL))) + ##if I want to add a legend, this gets rid of the slash bars in the boxes
+        #theme(legend.key = element_rect(colour = "black"))+ ##this adds back the legend outlines after removing the black lines above
+        cb_pallet  + 
+         scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim3), breaks = c(0,lim3/3, lim3*(2/3), lim3)) + ##expand = c(0,0) forces the y axis to start at zero, the limits argument sets the min and max of the axis, increasing the upperlimt to just above the top of the largest error bar ensures that the error bar doesn't get clipped
+        labs ( y =bquote('µg N' ~g^-1~soil^-1*'')) + 
+        ggtitle("c. Microbial Biomass N") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y = (myData3$mean + myData3$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       ##positions labels
+mbn
+```
+
+###microbial P v. treatment
+```{r}
+dat4 <- subset(dat, micro.p != "NA") ## remove na values
+myData4 <- aggregate(dat4$micro.p, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+lim4 <-1.5
+mbp <- ggplot(data = myData4, aes(x = names, y = mean, fill = names)) + ##sets up ggplot to 
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 0.5) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        bar_theme()+
+         #guides(fill = guide_legend(override.aes = list(colour = NULL))) + ##if I want to add a legend, this gets rid of the slash bars in the boxes
+        #theme(legend.key = element_rect(colour = "black"))+ ##this adds back the legend outlines after removing the black lines above
+        cb_pallet  + 
+         scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim4), breaks = c(0,lim4/3, lim4*(2/3), lim4)) + ##sets the min and max of the axis, increasing the upperlimt to just above the top of the largest error bar ensures that the error bar doesn't get clipped
+        labs ( y =bquote('µg P' ~g^-1~soil^-1*'')) + 
+        ggtitle("d. Microbial Biomass P") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies x position         
+                        y = (myData4$mean + myData4$se), ## specifies y position: puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                size = 12 * (5/14),
+                vjust = -0.5)       ##positions labels
+mbp
+```
+
+###creat and export a multi-pannel image with mbc, co2, mbp, mbn
+####note that the export code will have to be pasted into the console, does not work from rnotebook format
+```{r}
+png("micro_v_treat.png", width = 174, height = 116, unit = "mm", res = 300)
+ggarrange(mbc, co2, mbn, mbp, 
+          ncol = 2, nrow = 2, 
+          align = "v")       
+dev.off()
+```
+
+
+##Total P pools
+###non-absorbed
+```{r}
+myData <- subset(dat, !is.na(p.h2o) & !is.na(p.total))
+p <- ggplot(data = myData, aes(x = log(p.total), y = log(p.h2o))) ##sets up ggplot to the desired data
+p + geom_point ((aes())) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F, color = "black") + ##adds a linear fit
+        theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=12, color = "black", family = "Times"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=12, color = "black", family = "Times"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,0.005)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1))##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+
+```
+
+
+###Adsorbed
+##p.absorbed v. p.total
+```{r}
+myData <- subset(dat, !is.na(p.absorb) & !is.na(p.total))
+p <- ggplot(data = myData, aes(x = (p.total), y = (p.absorb))) 
+p + geom_point ((aes())) +  
+        thesis_theme() +
+        scale_x_continuous(expand = c(0,0.005)) + 
+        labs(x = "microbial biomass", y = "p.bicarb") + 
+        scale_y_continuous(expand = c(0,0.1))
+
+```
+
+###Labile
+```{r}
+myData <- subset(dat, !is.na(p.bicarb) & !is.na(p.total))
+p <- ggplot(data = myData, aes(x = log(p.total), y = log(p.bicarb))) ##sets up ggplot to the desired data
+p + geom_point ((aes())) +  ##creates a dot plot, shape indicates the type of dot.
+        geom_smooth(method = lm, se = F, color = "black") + ##adds a linear fit
+        thesis_theme() +
+        scale_x_continuous(expand = c(0,0.005)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1))##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+```
+
+###microbial
+```{r}
+myData <- subset(dat, !is.na(micro.p) & !is.na(p.total))
+p <- ggplot(data = myData, aes(x = log(p.total), y = log(micro.p))) ##sets up ggplot to the desired data
+p + geom_point ((aes())) +  ##creates a dot plot, shape indicates the type of dot.
+theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.title.x = element_blank(), ##gets rid of x axis totle
+              axis.text.x  = element_text(size=12, color = "black", family = "Times"),
+              axis.ticks = element_line(colour = "black", size = 1),
+              panel.border = element_blank(), ##makes it so panel has no border
+              axis.title.y = element_blank(), ##gets rid of y axis totle
+              axis.text.y = element_text(size=12, color = "black", family = "Times"), panel.grid.major =      element_blank(), ##panel.grid.major default has a stupid grid, get rid of it
+              panel.grid.minor = element_blank(), 
+              panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid")) + ##for some reason the background default is grey
+        scale_x_continuous(expand = c(0,0.005)) + ##forces x axis to start near 0, the 2 allows for some room between the 0 and the axis to that points aren't clipped
+        labs(x = "microbial biomass", y = "p.bicarb") + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1))##forces y axis to start at 0, the one gives the axis some room so data points on or really close to the axis aren't clipped
+
+```
+
+##pie charts of P fractions  
+###all pools
+```{r}
+p.pie1 <- data.frame( value = c(mean(na.omit(dat$p.bound)), mean(na.omit(dat$p.bicarb)), mean(na.omit(dat$micro.p))), Pool = c("Bound", "Olsen", "Microbial"))
+ p.pie1
+ library(ggplot2)
+ library(scales)
+ blank_theme <- theme_minimal()+
+  theme(
+          text = element_text(family = "Times New Roman", 
+                       face = "plain", 
+                       color = "black", 
+                       size = 12,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          panel.border = element_blank(),
+          panel.grid=element_blank(),
+          axis.ticks = element_blank(),
+          plot.title=element_text(size=14, face="bold")
+  )
+ big.p.pie <- ggplot(p.pie1, aes( x = "", y=value, fill=Pool)) + 
+         geom_bar(width = 1, stat = "identity", color = "black", size = 0.1)+ 
+         coord_polar("y", start = 1.4) +
+         blank_theme +
+         theme(axis.text.x = element_blank()) +
+         scale_fill_grey(start = 0, end = 1)
+ 
+png("bigP.png",
+    width = 3.8, 
+    height = 2.23, 
+    unit = "in", 
+    res = 300)  
+big.p.pie
+dev.off()  
+
+##get percentages of each
+p.pie1
+p.pie1$mean <- p.pie1$value
+p.pie1$sd <- c(sd(na.omit(dat$p.bound)), sd(na.omit(dat$p.bicarb)), sd(na.omit(dat$micro.p)))
+p.pie1$n <- c(length(na.omit(dat$p.bound)), length(na.omit(dat$p.bicarb)), length(na.omit(dat$micro.p)))
+p.pie1$se <- p.pie1$sd / sqrt(p.pie1$n - 1)
+##calculate percents
+mean(na.omit(dat$p.bound_total))
+sd(na.omit(dat$p.bound_total))
+dat$p.labile <- dat$p.bicarb + dat$micro.p
+dat$p.labile_total <- dat$p.labile/dat$p.total
+dat$p.labile_total
+mean(na.omit(dat$p.labile_total))*100
+sd(na.omit(dat$p.labile_total))*100
+mean(na.omit(dat$micro.p_total))*100
+sd(na.omit(dat$micro.p_total))*100
+```
+###just labile and microbial
+```{r}
+p.pie2 <- data.frame( value = c(mean(na.omit(dat$p.base)), mean(na.omit(dat$p.absorb)),mean(na.omit(dat$p.h2o)),mean(na.omit(dat$micro.p))), Pool = c("Base adsorbed", "Salt adsorbed", "Water soluble", "Microbial"))
+p.pie2$Pool <- ordered(p.pie2$Pool, levels = c("Base adsorbed", "Salt adsorbed", "Water soluble", "Microbial"))
+
+ wee.P <- ggplot(p.pie2, aes( x = "", y=value, fill=Pool)) + 
+         geom_bar(width = 1, 
+                  stat = "identity", 
+                  color = "black",
+                  size = 0.2)+ 
+         coord_polar("y", start = 1.2) +
+         blank_theme +
+         theme(axis.text.x = element_blank()) +
+         scale_fill_grey(start = 0.4, end = 1)
+ wee.P
+png("weeP.png",
+    width = 3.8,
+    height = 2.23,
+    unit = "in",
+    res = 300)
+wee.P
+dev.off()
+##calculate percents
+mean(na.omit(dat$p.h2o/dat$p.labile))*100
+sd(na.omit(dat$p.h2o/dat$p.labile))*100
+mean(na.omit(dat$p.absorb/dat$p.labile))*100
+sd(na.omit(dat$p.absorb/dat$p.labile))*100
+mean(na.omit(dat$micro.p/dat$p.labile))
+sd(na.omit(dat$micro.p/dat$p.labile))
+mean(na.omit(dat$p.base/dat$p.labile))
+sd(na.omit(dat$p.base/dat$p.labile))
+
+```
+
+
+##functional group graphs
+### All Arthropod activity by treatment
+```{r}
+dat1 <- subset(com.plot, abundance != "NA")
+myData <- aggregate(dat1$abundance, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+lim1 <- 27
+all <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 0.5) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+       bar_theme() +
+        cb_pallet  + 
+        scale_y_continuous(expand = c(0,0), limits = c(0, lim1), breaks = c(0, lim1/3, lim1*(2/3), lim1)) +
+        labs ( y = "Total Captures") +
+        ggtitle("a. All Fauna") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "ab", "ab", "b"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  
+```
+
+###herbivore
+```{r}
+dat2 <- subset(group.sum, herbivore != "NA") ## remove na values
+myData2 <- aggregate(dat2$herbivore, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+lim2 <- 6
+herb <- ggplot(data = myData2, aes(x = names, y = mean, fill = names))+ 
+        geom_bar (stat = "identity", 
+                  position = dodge, 
+                  width = 0.8, 
+                  color = "black") +
+        geom_errorbar(limits2, 
+                      position = dodge, 
+                     width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet + 
+          scale_y_continuous(expand = c(0,0), limits = c(0, lim2), breaks = c(0, lim2/3, lim2*(2/3), lim2)) +
+        labs ( y = "Total Captures") +
+        ggtitle("b. Herbivores") +
+       geom_text(                                          
+                aes(
+                        x = names,                                    
+                        y = (myData2$mean + myData2$se), 
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+  position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))
+```
+###predator
+```{r}
+dat3 <- subset(group.sum, predator != "NA") ## remove na values
+myData3 <- aggregate(dat3$predator, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) 
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, ymin = myData3$mean - myData3$se)##creates limits for errorbars
+lim3 <- 15
+pred <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , 
+                  position = dodge, width = 0.8, 
+                  color = "black") + 
+        geom_errorbar(limits3, position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet + ##makes the color pallet grey scale
+         scale_y_continuous(expand = c(0,0), 
+                            limits = c(0, lim3), 
+                            breaks = c(0, lim3/3, lim3*(2/3), lim3)) +
+        labs ( y = "Total Captures") +
+        ggtitle("c. Predators") +
+       geom_text(                                          
+                aes(
+                        x = names,                                    
+                        y = (myData3$mean + myData3$se), 
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+  position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))
+
+```
+
+###scavenger
+```{r}
+dat4 <- subset(group.sum, scavenger != "NA") ## remove na values
+myData4 <- aggregate(dat4$scavenger, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits4 <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+lim4 <- 9
+scav <- ggplot(data = myData4, aes(x = names, y = mean, fill = names))  + 
+        geom_bar (stat = "identity", 
+                  position = dodge, 
+                  width = 0.8, 
+                  color = "black") +
+        geom_errorbar(limits4, 
+                      position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim4), 
+                           breaks = c(0, lim4/3, lim4*(2/3), lim4)) +
+        labs ( y = "Total Captures") +
+        ggtitle("d. Detritivores") +
+       geom_text(                                          
+                aes(
+                        x = names,                                    
+                        y = (myData4$mean + myData4$se), 
+                        label = c("a", "ab", "ab", "b"),
+                        family = "Times New Roman"),   
+  position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))
+
+```
+
+###multipannel plot
+```{r}
+png("fauna.png", width = 174, height = 116, unit = "mm", res = 300)
+ggarrange(all, herb, pred, scav, ##graphs to be arranged
+          ncol = 2, nrow = 2, ##number of columns and rows
+          align = "v")       ##align graphs vertically
+dev.off()
+```
+##total carbon and na by treatment
+###total C
+#### Just C bout 1
+```{r}
+##get the data into a format that can be easily graphed
+dat1 <- subset(dat, c.percent != "NA" & bout == "20160714" ) ## remove na values
+myData <- aggregate(dat1$c.percent, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))         ##creates dataframe for 
+##creating the graph
+cb1 <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits,    ##sets error bars to limits, specified above
+                      position = dodge,   ##positions error bars
+                      width = 0.15, size = 0.5) + 
+    bar_theme()+
+        #theme(legend.key = element_rect(colour = "black"))+ ##this adds back the legend outlines after removing the black lines above
+        cb_pallet  + 
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 3.3), 
+                           breaks = c(0, 1, 2, 3)) + 
+        labs ( y = "% of soil C (m/m)") +
+        ggtitle("a. Soil C week 1") +
+        geom_text(                                          
+                aes(
+                        x = names,                           
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       ##positions labels
+cb1
+```
+####total carbon week 12
+```{r}
+##get the data into a format that can be easily graphed
+dat2 <- subset(dat, c.percent != "NA" & bout == "20160930" ) ## remove na values
+myData2 <- aggregate(dat2$c.percent, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))          
+
+cb2 <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits2,    
+                      position = dodge,   
+                      width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet  +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 3.3), 
+                           breaks = c(0, 1, 2, 3)) +
+        labs (y = "% of soil C (m/m)") +
+        ggtitle("b. Soil C week 12") +
+        geom_text(                                         
+                aes(
+                        x = names,                           
+                        y = (myData2$mean + myData2$se), 
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       
+cb2
+```
+###TOC
+####week 1 toc
+```{r}
+##get the data into a format that can be easily graphed
+dat1 <- subset(dat, toc.k2so4!= "NA" & bout == "20160714" ) ## remove na values
+myData <- aggregate(dat1$toc.k2so4, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))         ##creates dataframe for 
+##creating the graph
+lim3 <- 210
+cb1 <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits,    ##sets error bars to limits, specified above
+                      position = dodge,   ##positions error bars
+                      width = 0.15, size = 0.5) + 
+    bar_theme()+
+        #theme(legend.key = element_rect(colour = "black"))+ ##this adds back the legend outlines after removing the black lines above
+        cb_pallet  + 
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c (0, lim3),
+                           breaks = c(0, lim3/3, lim3*(2/3), lim3)) + 
+        labs ( y =bquote('µg C' ~g^-1~soil^-1*'')) +
+        ggtitle("a. Soil C week 1") +
+        geom_text(                                          
+                aes(
+                        x = names,                           
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "b", "b"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       ##positions labels
+cb1
+```
+
+####week 12 TOC
+
+```{r}
+##get the data into a format that can be easily graphed
+dat2 <- subset(dat, toc.h2o != "NA" & bout == "20160930") ## remove na values
+myData2 <- aggregate(dat2$toc.h2o, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)
+lim4 <- 72
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))          
+
+cb2 <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits2,    
+                      position = dodge,   
+                      width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet  +
+        labs (y =bquote('µg C' ~g^-1~soil^-1*'')) +
+        scale_y_continuous(expand = c(0,0),
+                           limits = c(0, lim4),
+                           breaks = c(0, lim4/3, lim4 *(2/3), lim4)) +
+        ggtitle("b. Soil C week 12") +
+        geom_text(                                         
+                aes(
+                        x = names,                           
+                        y = (myData2$mean + myData2$se), 
+                        label = c("a", "b", "b", "b"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       
+cb2
+bwplot(toc.h2o ~ treatment, data = subset(dat, bout == 20160930))
+```
+
+###total Na bout 1
+```{r}
+##get the data into a format that can be easily graphed
+dat3 <- subset(dat, na != "NA" & bout == "20160714" ) ## remove na values
+myData3 <- aggregate(dat3$na, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, ymin = myData3$mean - myData3$se)
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))          
+lim1 <- 1500
+nb1 <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits3,    
+                      position = dodge,   
+                      width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet  +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim1),
+                           breaks = c(0, lim1/3, lim1*(2/3), lim1)) +
+        labs ( y =bquote('µg Na'^+"" ~g^-1~soil^-1*'')) +
+        ggtitle("c. Soil sodium week 1") +
+        geom_text(                                         
+                aes(
+                        x = names,                           
+                        y = (myData3$mean + myData3$se), 
+                        label = c("a", "b", "a", "b"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       
+nb1
+```
+
+###Na week 12
+```{r}
+##get the data into a format that can be easily graphed
+dat4 <- subset(dat, na != "NA" & bout == "20160930" ) ## remove na values
+myData4 <- aggregate(dat4$na, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+
+limits4 <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))          
+lim1 <- 1500
+nb2 <- ggplot(data = myData4, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits4,    
+                      position = dodge,   
+                      width = 0.15, size = 0.5) + 
+        bar_theme()+
+        cb_pallet  +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim1),
+                           breaks = c(0, lim1/3, lim1*(2/3), lim1)) +
+         labs ( y =bquote('µg Na'^+"" ~g^-1~soil^-1*'')) +
+        ggtitle("d. Soil sodium week 12") +
+        geom_text(                                         
+                aes(
+                        x = names,                           
+                        y = (myData4$mean + myData4$se), 
+                        label = c("a", "b", "a", "b"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       
+nb2
+```
+
+###putting all 4 together
+```{r}
+png("saltC.png", width = 129, height = 86, unit = "mm", res = 300)
+ggarrange(cb1, cb2, nb1, nb2, ##graphs to be arranged
+          ncol = 2, nrow = 2, ##number of columns and rows
+          align = "v")       ##align graphs vertically
+dev.off()
+```
+
+
+##soil moisture v. water soluble P
+```{r}
+myData <- subset(dat, !is.na(p.h2o) & !is.na(moist.percent))
+log.model <- lm(log(p.h2o) ~ moist.percent, data = myData)
+log.model.df <- data.frame(x = myData$moist.percent, y = exp(fitted(log.model)))
+mwp <- ggplot(data = myData, aes(x = moist.percent, y = p.h2o)) +  
+        geom_point (aes(), size = 0.5) +  
+       geom_line(data = log.model.df, 
+          aes(x, y), 
+          color = "black", 
+          size = 0.5) +
+        xy_theme() +
+        labs(y =bquote('µg P' ~g^-1~soil^-1*''),x = "Moisture content (%)") + ##labels the axes
+        scale_y_continuous(expand = c(0,0), limits = c(0, 4)) + 
+        scale_x_continuous(expand = c(0, 0.1), limits = c(0, 25)) +
+        ggtitle("Water soluble P v. moisture content") +
+        annotate("text", x = 7.3, y = 3, 
+                 label = "p < 0.001\nSlope = 0.19",
+                 family = "Times New Roman") +
+        annotate("text", x = 7.3, y = 2.4,
+                 label = "r ^ 2 == 0.20",
+                 parse = TRUE,
+                 family = "Times New Roman")
+mwp
+summary(lm(p.h2o ~ moist, data = dat))
+```
+###exporting the plot
+
+png("nonadsorb v. moist.png", width = 129, height = 86, unit = "mm", res = 300)
+mwp
+dev.off()
+
+##multi pannel of bio v. resin
+###xyplot of resin v. biomass
+```{r}
+dat1 <- subset(dc.plot, micro.c != "NA" & p.resin != "NA") 
+rvc <- ggplot(data = dat1, aes(x = micro.c, y = p.resin)) + 
+        geom_point(aes(), size = 0.5) +
+        xy_theme() +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 0.08), 
+                           breaks = c(0,0.02, 0.04, 0.06, 0.08)) +
+        scale_x_continuous(expand = c(0,0), 
+                           limits = c(0, 210),
+                           breaks = c(0, 50, 100, 150, 200))+
+        labs(y =bquote('µg P' ~cm^-2~day^-1*''), x = bquote('µg C' ~g^-1~soil^-1*'')) +
+        ggtitle("a. Microbial Biomass")+
+        annotate("text", x = 30, y = .06, 
+                 label = "r ^ 2 == 0.10", 
+                 parse = TRUE,
+                 family = "Times New Roman") +
+        annotate("text", x = 30, y = 0.066, 
+                 label = "p = 0.23",
+                 family = "Times New Roman")
+
+summary(lm(log(p.resin) ~ log(micro.c), data = dc.plot))
+
+```
+###xyplot of resin v. co2
+```{r}
+dat2 <- subset(dc.plot, co2 != "NA" & p.resin != "NA")
+log.model1 <- lm(log(p.resin) ~ log(co2), data = dat2)
+log.model.df1 <- data.frame(x = dat2$co2, y = exp(fitted(log.model1)))
+rvr <- ggplot(data = dat2, aes(x = co2, y = p.resin))+
+        geom_point(aes(), size = 0.5) +
+       geom_line(data = log.model.df1, 
+                  aes(x, y), 
+                  color = "black", 
+                  size = 0.5) +
+        labs(y = bquote('µg P' ~cm^-2~day^-1*''), 
+             x = bquote ('µg' ~CO[2]-C~day^-1*'')) +
+        ggtitle("b. Microbial Respiration") +
+        annotate("text", x = 100, y = 0.052, 
+                 label = "p = 0.02\nSlope = 0.42",
+                 family = "Times New Roman") +
+        annotate("text", x = 100, y = 0.042, 
+                 label = "r ^ 2 == 0.12", parse = T,
+                 family = "Times New Roman") +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 0.08), 
+                           breaks = c(0,0.02, 0.04, 0.06, 0.08)) +
+                scale_x_continuous(expand = c(0,0), 
+                           limits = c(0, 210),
+                           breaks = c(0, 50, 100, 150, 200)) +
+        xy_theme()
+rvr
+
+summary(lm(log(p.resin) ~ log(co2), data = dc.plot))
+```
+
+###xyplot of phos v. resin
+```{r}
+dat3 <- subset(dc.plot, phos != "NA" & p.resin != "NA" & p.resin > 0)
+log.model2 <- lm(log(p.resin) ~ log(phos), data = dat3)
+log.model.df2 <- data.frame(x = dat3$phos, y = exp(fitted(log.model2)))
+rvp <- ggplot(data = dat3, aes(x = phos, y = p.resin))+
+        geom_point(aes(), size = 0.5) +
+        geom_line(data = log.model.df2, 
+                  aes(x, y), 
+                  color = "black", 
+                  size = 0.5) +
+        labs(x = bquote('nmol activity' ~g^-1~hr^-1*''), y = bquote('µg P' ~cm^-2~day^-1*'')) +
+        ggtitle("c. Phosphatase Activity") +
+        annotate("text", x = 150, y = 0.022, 
+                 label = "p < 0.01\nSlope = 1.01", 
+                 family = "Times New Roman") +
+        annotate("text", x = 150, y = 0.01, 
+                 label = "r ^ 2 == 0.27", 
+                 parse = T, 
+                 family = "Times New Roman") +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 0.08), 
+                           breaks = c(0,0.02, 0.04, 0.06, 0.08)) +
+        scale_x_continuous(expand = c(0, 0),
+                           limits = c(0, 182),
+                           breaks = c(0, 172/4, 172/2, 172*(3/4), 172))+
+        xy_theme() 
+rvp
+
+summary(lm(log(p.resin) ~ log(phos), data = dc.plot))
+```
+
+###multi pannel of all three
+```{r}
+png("resin_v_micro.png", width = 129, height = 232, unit = "mm", res = 300)
+ggarrange(rvc, rvr, rvp, 
+          ncol = 1, nrow = 3, 
+          align = "v") 
+dev.off()
+```
+
+
+##p.absorb v. p.total
+```{r}
+dat1 <- subset(dat, p.total != "NA" & p.absorb != "NA")
+
+tota <- ggplot(data = dat1, aes(x = p.total, y = p.absorb))+
+        geom_point(aes(), size = 0.5) +
+        labs(x = bquote('µg P' ~g^-1~soil^-1*''), y = bquote('µg adsorbed-P' ~g^-1~soil^-1*'')) +
+        ggtitle("Salt adsorbed P v. Total P") +
+        geom_vline(xintercept = 875, linetype=2)+
+        xy_theme() +
+        scale_y_continuous(expand = c(0,0.1), limits = c(0, 5))
+tota
+```
+png("adsorbed v. total.png", width = 129, height = 77.4, unit = "mm", res = 300)
+tota
+dev.off()
+
+
+
+##p pools by treatment
+###water-soluble P by treatment
+```{r}
+dat1 <- subset(dat, !is.na(p.h2o))
+myData <- aggregate(dat1$p.h2o, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+lim1 <- 1.5
+wsp <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + 
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 0.5) + 
+        bar_theme() +
+        cb_pallet  + 
+        labs(y =bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("a. Water-soluble P") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, lim1), breaks = c(0, lim1/3, lim1*(2/3), lim1))
+wsp
+```
+###labile P v treatment
+```{r}
+dat2 <- subset(dat, !is.na(p.bicarb))
+myData2 <- aggregate(dat2$p.bicarb, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+lim2 <- 9
+sap <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + 
+        geom_errorbar(limits2, position = dodge, width = 0.15, size = 0.5) + 
+        bar_theme() +
+        cb_pallet  + 
+        labs(y =bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("b. Olsen P") +
+        geom_text(                      
+                aes(x = names,                           
+                        y = (myData2$mean + myData2$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, lim2), breaks = c(0, lim2/3, lim2*(2/3), lim2) )
+sap
+```
+###total P v. treatment
+```{r}
+dat3 <- subset(dat, !is.na(p.total))
+myData3 <- aggregate(dat3$p.total, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, ymin = myData3$mean - myData3$se)##creates limits for errorbars
+lim3 <- 990
+tpt <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + 
+        geom_errorbar(limits3, position = dodge, width = 0.15, size = 0.5) + 
+        bar_theme() +
+        cb_pallet  + 
+        labs(y =bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("c. Total P") +
+        geom_text(                      
+                aes(x = names,                           
+                        y = (myData3$mean + myData3$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                    family = "Times New Roman"),
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, lim3), breaks = c(0, lim3/3, lim3*(2/3), lim3))
+tpt
+```
+
+
+###multipannel of all 3
+```{r}
+png("p_treat.png", width = 84, height = 130, unit = "mm", res = 300)
+ggarrange(wsp, sap, tpt,
+          ncol = 1, nrow = 3, 
+          align = "v") 
+dev.off()
+```
+
+##p pools v. bio
+###micro v. p pools
+####p.h2o v. microbe
+```{r}
+myData <- subset(dat, !is.na(p.h2o) & !is.na(co2))
+lim1 <- 4
+a <- ggplot(data = myData, aes(x = co2, y = p.h2o)) +  
+        geom_point (aes(), size = 0.5) +  
+        xy_theme() +
+        labs(x =bquote('µg' ~CO[2]-C ~g^-1~soil^-1~day^-1*''),
+             y = bquote('µg P' ~g^-1~soil^-1*'')) +
+        scale_y_continuous(expand = c(0,0.001), 
+                           limits = c(0, 4), 
+                           breaks = c(0, lim1/4, lim1/2, lim1*(3/4), lim1)) + 
+        scale_x_continuous(expand = c(0, 2), limits = c(2, 420)) +
+        ggtitle("a. Water Soluble P v. Respiration") +
+        annotate("text", x = 250, y = 3, 
+                 label = "p = 0.27\nSlope = 0.02",
+                 family = "Times New Roman") 
+a
+```
+
+####p.bicarb v. micro
+```{r}
+myData3 <- subset(dat, !is.na(p.bicarb) & !is.na(co2))
+lim2 <- 24
+b <- ggplot(data = myData3, aes(x = co2, y = p.bicarb)) +  
+        geom_point (aes(), size = 0.5) +  
+        xy_theme() +
+        labs(x =bquote('µg' ~CO[2]-C ~g^-1~soil^-1~day^-1*''),
+             y = bquote('µg P' ~g^-1~soil^-1*'')) + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1), limits = c(0, lim2),
+                          breaks = c(0, lim2/4, lim2/2, lim2*(3/4), lim2)) + 
+        scale_x_continuous(expand = c(0, 2), limits = c(2, 420)) +
+        ggtitle("b. Olsen P v. Respiration") +
+        annotate("text", x = 250, y = 15, 
+                 label = "p = 0.48\nSlope = 0.01",
+                 family = "Times New Roman") 
+b
+```
+
+
+###fauna v. p pools
+####p.h2o v. fauna
+
+```{r}
+myData2 <- subset(dc.plot, !is.na(p.h2o) & !is.na(abundance))
+lim3 <- 2.4
+c <- ggplot(data = myData2, aes(x = abundance, y = p.h2o)) +  
+        geom_point (aes(), size = 0.5) +  
+        xy_theme() +
+        labs(x = "Total Captures",
+             y = bquote('µg P' ~g^-1~soil^-1*'')) + 
+        scale_y_continuous(expand = c(0,0.05),
+                          limits = c(0, lim3),
+                          breaks = c(0, lim3/4, lim3/2, lim3*(3/4), lim3) ) + 
+        scale_x_continuous(expand = c(0, 0),
+                           limits = c (0, 48), breaks = c(0, 48/4, 48/2, 48 *(3/4), 48)) +
+        ggtitle("c. Water Soluble P v. Faunal Activity") +
+        annotate("text", x = 32, y = 1.5, 
+                 label = "p = 0.24\nSlope = -0.01",
+                 family = "Times New Roman") 
+c
+```
+
+####p.bicarb v. fauna
+```{r}
+myData4 <- subset(dc.plot, !is.na(p.bicarb) & !is.na(abundance))
+d <- ggplot(data = myData4, aes(x = abundance, y = p.bicarb)) +  
+        geom_point (aes(), size = 0.5) +  
+        xy_theme() +
+        labs(x ="Total Captures",
+             y = bquote('µg P' ~g^-1~soil^-1*'')) + ##labels the axes
+        scale_y_continuous(expand = c(0,0.1), 
+                           limits = c(0, 16),
+                           breaks = c(0, 16/4, 16/2, 16*(3/4), 16)) + 
+        scale_x_continuous(expand = c(0, 0),
+                           limits = c (0, 48), 
+                           breaks = c(0, 48/4, 48/2, 48 *(3/4), 48)) +
+        ggtitle("d. Olsen P v. Faunal Activity") +
+        annotate("text", x = 30, y = 12, 
+                 label = "p = 0.35\nSlope < 0.01",
+                 family = "Times New Roman") 
+d
+```
+
+###make multipannel plot
+```{r}
+png("bio_v_p.png", width = 174, height = 174, unit = "mm", res = 300)
+ggarrange(a, b, c, d,
+          ncol = 2, nrow = 2, 
+          align = "v") 
+dev.off()
+```
+
+
+##pH v labile P, instantaneous and change
+###instantanous
+```{r}
+dat1 <- subset(dat, pH != "NA" & p.bicarb_total != "NA") 
+oip <- ggplot(data = dat1, aes(x = pH, y = p.bicarb_total)) + 
+        geom_point(aes(), size = 0.5) +
+        xy_theme() +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c (0, 0.025))+
+        scale_x_continuous(expand = c(0,0))+
+        labs(y =bquote('µg P' ~g^-1~soil^-1*''), x = "pH") +
+        ggtitle("a. Instantanous Olsen P")+
+        annotate("text", x = 7, y = 0.017, 
+                 label = "p = 0.23\nSlope = 0.18",
+                 family = "Times New Roman")
+oip
+summary(lm(log(p.resin) ~ log(micro.c), data = dc.plot))
+```
+
+###change
+```{r}
+dat2 <- subset(dc.plot, pH != "NA" & p.bicarb.change != "NA") 
+ocp <- ggplot(data = dat2, aes(x = pH, y = p.bicarb.change)) + 
+        geom_point(aes(), size = 0.5) +
+        geom_smooth(aes(), method = "lm", se = F, color = "black" ) +
+        xy_theme() +
+        scale_y_continuous(expand = c(0,0), limits = c(-5, 20))+
+        scale_x_continuous(expand = c(0,0), limits = c(5.5, 8.1))+
+        labs(y =bquote('µg P' ~g^-1~soil^-1*''), x = "pH") +
+        ggtitle("b. Change in Olsen P")+
+        annotate("text", x = 6.8, y = 16, 
+                 label = "p = 0.05\nSlope = 2.57",
+                 family = "Times New Roman") +
+        annotate("text",
+                 x = 6.8, y = 9.2,
+                 label = "r ^ 2 == 0.04",
+                 parse = TRUE,
+                 family = "Times New Roman")
+ocp
+summary(lm((p.bicarb.change) ~ (pH), data = dc.plot))
+```
+
+##creating and exporting a multipannel plot
+png("olsen v ph.png", width = 84, height = 120, unit = "mm", res = 300)
+ggarrange(oip, ocp, 
+          ncol = 1, nrow = 2, 
+          align = "v") 
+dev.off()
+#defense presentation
+##theme for bar graphs for power point
+```{r}
+ppbar_theme <- function (base_size = 16, base_family = "Calibri") {
+  theme(
+    line = element_line(color = "black", size = 0.5, linetype = 1, lineend = "butt"),
+    rect = element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1), 
+    text = element_text(family = base_family, 
+                       face = "plain", 
+                       color = "black", 
+                       size = base_size,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+    axis.text = element_text(size = 10, color = "black"), 
+    strip.text = element_text(size = base_size), 
+    axis.line = element_line(colour = "black"), 
+    axis.text.x = element_blank(), 
+    axis.text.y = element_text(hjust = 1,  
+                               margin = margin(t = 0, r = 4, b = 0, l = 0), 
+                               size = 12), 
+    axis.ticks = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.title.y = element_text(hjust = 0.5, 
+                                angle = 90, 
+                                margin = margin(t = 0, r = 10, b = 0, l = 0),
+                                size = 12), 
+    axis.ticks.length = unit(0.15, "cm"), 
+    
+  legend.background = element_rect(), 
+  legend.key = element_rect(fill = NA, colour = "white"),
+  legend.key.size = unit(0.8, "lines"), 
+  legend.key.height = NULL,
+  legend.key.width = NULL, 
+  legend.text = element_text(size = 14),
+  legend.text.align = NULL,
+  legend.title = element_blank(),
+  legend.title.align = NULL, 
+  legend.position = "none", ##legend position "none" gets rid of the legend. Change to right, left, top, or bottom or corridinates for custom position
+  legend.direction = NULL,
+  legend.justification = "center", 
+  legend.box = NULL, 
+
+    panel.background = element_rect(fill = "white",
+                                    colour = "white",
+                                    size = 0.5, 
+                                    linetype = "solid"), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+
+    strip.background = element_rect(fill = "grey80", colour = NA), 
+    strip.text.x = element_text(), 
+    strip.text.y = element_text(angle = -90), 
+    
+    plot.background = element_blank(), 
+    plot.title = element_text(face = "bold",
+                              hjust = 0,
+                              margin = margin(t = 0, r = 0, b = 10, l = 0)), 
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "lines"), complete = TRUE)
+}
+
+```
+##theme for xyplots powerpoint
+```{r}
+ppxy_theme <- function (base_size = 18, base_family = "Calibri") {
+  theme(
+    line = element_line(color = "black", size = 0.5, linetype = 1, lineend = "butt"),
+    rect = element_rect(fill = "white", colour = "black", size = 0.5, linetype = 1), 
+    text = element_text(family = base_family, 
+                       face = "plain", 
+                       color = "black", 
+                       size = base_size,
+                       hjust = 0.5, 
+                       vjust = 0.5, 
+                       angle = 0,
+                       lineheight = 0.9,
+                       margin = margin(t = 0, r = 0, b = 0, l = 0),
+                       debug = FALSE), 
+    axis.text = element_text(size = base_size, color = "black"), 
+    strip.text = element_text(size = base_size), 
+    axis.line = element_line(colour = "black"), 
+    axis.ticks = element_line(),
+    axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)), 
+    axis.title.y = element_text(hjust = 0.5, 
+                                angle = 90, 
+                                margin = margin(t = 0, r = 10, b = 0, l = 0)), 
+    axis.ticks.length = unit(0.15, "cm"), 
+    
+  legend.background = element_rect(), 
+  legend.key = element_rect(fill = NA, colour = "white"),
+  legend.key.size = unit(0.8, "lines"), 
+  legend.key.height = NULL,
+  legend.key.width = NULL, 
+  legend.text = element_text(size = 14),
+  legend.text.align = NULL,
+  legend.title = element_blank(),
+  legend.title.align = NULL, 
+  legend.position = "none", ##legend position "none" gets rid of the legend. Change to right, left, top, or bottom or corridinates for custom position
+  legend.direction = NULL,
+  legend.justification = "center", 
+  legend.box = NULL, 
+
+    panel.background = element_rect(fill = "white",colour = "white",size = 0.5, linetype = "solid"), 
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+
+    strip.background = element_rect(fill = "grey80", colour = NA), 
+    strip.text.x = element_text(), 
+    strip.text.y = element_text(angle = -90), 
+    
+    plot.background = element_blank(), 
+    plot.title = element_text(face = "bold",
+                              hjust = 0,
+                              margin = margin(t = 0, r = 0, b = 10, l = 0)), 
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "lines"), complete = TRUE)
+}
+
+```
+##microbial data by treatment
+###microbial respiration by treatment
+```{r}
+##get the data into a format that can be easily graphed
+dat1 <- subset(dat, co2 != "NA") ## remove na values
+myData <- aggregate(dat1$co2, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)
+label.df <- data.frame(Group = c("Control", "Na", "Stover", "Stover & Na"))         
+lim1 <- 150
+co2 <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) + 
+        geom_bar (stat = "identity" , 
+                  position = dodge, 
+                  width = bw, 
+                  color = "black") + 
+        geom_errorbar(limits,    ##sets error bars to limits, specified above
+                      position = dodge,   ##positions error bars
+                      width = 0.15, size = 0.5) + 
+    ppbar_theme()+
+        theme(legend.position = "none") +
+        cb_pallet  + 
+         scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim1), breaks = c(0,lim1/3, lim1*(2/3), lim1))+ 
+        labs ( y =bquote('µg' ~CO[2]~ '- C' ~g^-1~day^-1*'')) +
+        ggtitle("Respiration") +
+        geom_text(                                          
+                aes(
+                        x = names,                           
+                        y = (myData$mean + myData$se), 
+                        label = c("a", "a", "b", "b"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))       ##positions labels
+co2
+```
+###microbial biomass by treatment
+```{r}
+dat2 <- subset(dat, micro.c != "NA") ## remove na values
+myData2 <- aggregate(dat2$micro.c, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+lim <- 210 
+mbc <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) + ##sets up ggplot
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") +
+        geom_errorbar(limits2, position = dodge, width = 0.15, size = 0.5) +
+        ppbar_theme()+
+        cb_pallet  + 
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim), breaks = c(0,lim/3, lim*(2/3), lim)) + 
+        labs ( y =bquote('µg C' ~g^-1~soil^-1*'')) + 
+        ggtitle("Biomass C") +
+        geom_text(                                          
+                aes(
+                        x = names,                           
+                        y =( myData2$mean + myData2$se), 
+                        label = c("a", "a", "b", "b"),##says what the lables should be
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12 * (5/14))      ##positions labels
+mbc
+```
+###two pannels final plot
+```{r}
+png("micropp.png",  width = 6, height = 3.2, unit = "in", res = 300)
+ggarrange(mbc, co2, ##graphs to be arranged
+          ncol = 2, nrow = 1)       ##align graphs vertically
+dev.off()
+```
+##functional group graphs
+### All Arthropod activity by treatment
+```{r}
+dat1 <- subset(com.plot, abundance != "NA")
+myData <- aggregate(dat1$abundance, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+lim1 <- 30
+all <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 0.5) +
+        ppbar_theme() +
+        cb_pallet  + 
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim1), 
+                           breaks = c(0, lim1/3, lim1*(2/3), lim1)) +
+        labs ( y = "Total Captures") +
+        ggtitle("All Fauna") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                          
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "ab", "ab", "b"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  
+```
+####export single pannel of the fauna activity
+```{r}
+png("fauna1pp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+all
+dev.off()
+```
+
+
+###herbivore
+```{r}
+dat2 <- subset(group.sum, herbivore != "NA") ## remove na values
+myData2 <- aggregate(dat2$herbivore, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+lim2 <- 6
+herb <- ggplot(data = myData2, aes(x = names, y = mean, fill = names))+ 
+        geom_bar (stat = "identity", 
+                  position = dodge, 
+                  width = 0.8, 
+                  color = "black") +
+        geom_errorbar(limits2, 
+                      position = dodge, 
+                     width = 0.15, size = 0.5) + 
+        ppbar_theme()+
+        cb_pallet + 
+          scale_y_continuous(expand = c(0,0), 
+                             limits = c(0, lim2), 
+                             breaks = c(0, lim2/3,lim2*(2/3), lim2)) +
+        labs ( y = "Total Captures") +
+        ggtitle("Herbivores") +
+       geom_text(                                          
+                aes(
+                        x = names,                                    
+                        y = (myData2$mean + myData2$se), 
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+  position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))
+```
+###predator
+```{r}
+dat3 <- subset(group.sum, predator != "NA") ## remove na values
+myData3 <- aggregate(dat3$predator, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) 
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, ymin = myData3$mean - myData3$se)##creates limits for errorbars
+lim3 <- 15
+pred <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , 
+                  position = dodge, width = 0.8, 
+                  color = "black") + 
+        geom_errorbar(limits3, position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        ppbar_theme()+
+        cb_pallet + ##makes the color pallet grey scale
+         scale_y_continuous(expand = c(0,0), 
+                            limits = c(0, lim3), 
+                            breaks = c(0, lim3/3, lim3*(2/3), lim3)) +
+        labs ( y = "Total Captures") +
+        ggtitle("Predators") +
+       geom_text(                                          
+                aes(
+                        x = names,                                    
+                        y = (myData3$mean + myData3$se), 
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+  position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))
+
+```
+
+###scavenger
+```{r}
+dat4 <- subset(group.sum, scavenger != "NA") ## remove na values
+myData4 <- aggregate(dat4$scavenger, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits4 <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+lim4 <- 9
+scav <- ggplot(data = myData4, aes(x = names, y = mean, fill = names))  + 
+        geom_bar (stat = "identity", 
+                  position = dodge, 
+                  width = 0.8, 
+                  color = "black") +
+        geom_errorbar(limits4, 
+                      position = dodge, 
+                      width = 0.15, size = 0.5) + 
+        ppbar_theme()+
+        cb_pallet +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim4), 
+                           breaks = c(0, lim4/3, lim4*(2/3), lim4)) +
+        labs ( y = "Total Captures") +
+        ggtitle("Detritivores") +
+       geom_text(                                          
+                aes(
+                        x = names,                                    
+                        y = (myData4$mean + myData4$se), 
+                        label = c("a", "ab", "ab", "b"),
+                        family = "Times New Roman"),   
+  position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))
+
+```
+
+###multipannel plot
+```{r}
+png("faunapp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+ggarrange(all, herb, pred, scav, ##graphs to be arranged
+          ncol = 2, nrow = 2, ##number of columns and rows
+          align = "v")       ##align graphs vertically
+dev.off()
+```
+##soil P v treatment
+###total P
+```{r}
+dat3 <- subset(dat, !is.na(p.total))
+myData3 <- aggregate(dat3$p.total, by = list(treat = dat3$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData3 <- do.call(data.frame, myData3) ##rearranges dataframe
+myData3$se <- myData3$x.sd / sqrt(as.numeric(myData3$x.n)) ##calculates SE
+colnames(myData3) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData3$treatment <- ordered(myData3$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData3$names <- factor(myData3$treatment, levels = myData3$treatment[order(myData3$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits3 <- aes(ymax = myData3$mean + myData3$se, ymin = myData3$mean - myData3$se)
+lim3 <- 990
+tpt <- ggplot(data = myData3, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + 
+        geom_errorbar(limits3, position = dodge, width = 0.15, size = 0.5) + 
+        ppbar_theme() +
+        cb_pallet  + 
+        labs(y =bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("Total P") +
+        geom_text(                      
+                aes(x = names,                           
+                        y = (myData3$mean + myData3$se), ##puts labels above the error bars
+                        label = c("a", "b", "a", "b"),
+                    family = "Times New Roman"),
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, lim3), breaks = c(0, lim3/3, lim3*(2/3), lim3))
+tpt
+```
+
+###Olsen P
+```{r}
+dat2 <- subset(dat, !is.na(p.bicarb))
+myData2 <- aggregate(dat2$p.bicarb, by = list(treat = dat2$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData2 <- do.call(data.frame, myData2) ##rearranges dataframe
+myData2$se <- myData2$x.sd / sqrt(as.numeric(myData2$x.n)) ##calculates SE
+colnames(myData2) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData2$treatment <- ordered(myData2$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData2$names <- factor(myData2$treatment, levels = myData2$treatment[order(myData2$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits2 <- aes(ymax = myData2$mean + myData2$se, ymin = myData2$mean - myData2$se)##creates limits for errorbars
+lim2 <- 9
+sap <- ggplot(data = myData2, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + 
+        geom_errorbar(limits2, position = dodge, width = 0.15, size = 0.5) + 
+        ppbar_theme() +
+        cb_pallet  + 
+        labs(y =bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("Olsen P") +
+        geom_text(                      
+                aes(x = names,                           
+                        y = (myData2$mean + myData2$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, lim2), breaks = c(0, lim2/3, lim2*(2/3), lim2) )
+sap
+```
+###Water soluble P
+```{r}
+dat1 <- subset(dat, !is.na(p.h2o))
+myData <- aggregate(dat1$p.h2o, by = list(treat = dat1$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData <- do.call(data.frame, myData) ##rearranges dataframe
+myData$se <- myData$x.sd / sqrt(as.numeric(myData$x.n)) ##calculates SE
+colnames(myData) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData$treatment <- ordered(myData$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData$names <- factor(myData$treatment, levels = myData$treatment[order(myData$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData$mean + myData$se, ymin = myData$mean - myData$se)##creates limits for errorbars
+lim1 <- 1.5
+wsp <- ggplot(data = myData, aes(x = names, y = mean, fill = names)) +
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + 
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 0.5) + 
+        ppbar_theme() +
+        cb_pallet  + 
+        labs(y =bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("Water-soluble P") +
+        geom_text(                                          ##to add significance labels graphs
+                aes(
+                        x = names,                           ##specifies that lables should go with treatment (labeled names above)         
+                        y = (myData$mean + myData$se), ##puts labels above the error bars
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   ##says what the lables should be
+                position = position_dodge(width = 1),
+                vjust = -0.5,
+                size = 12*(5/14))  +
+        scale_y_continuous(expand = c(0, 0), limits = c(0, lim1), breaks = c(0, lim1/3, lim1*(2/3), lim1))
+wsp
+```
+
+###microbial P v. treatment
+```{r}
+dat4 <- subset(dat, micro.p != "NA") ## remove na values
+myData4 <- aggregate(dat4$micro.p, by = list(treat = dat4$treatment), FUN = function(x) c(mean = mean(x), sd = sd(x), n = length(x))) ##creates a data framewith mean, sd, and n
+myData4 <- do.call(data.frame, myData4) ##rearranges dataframe
+myData4$se <- myData4$x.sd / sqrt(as.numeric(myData4$x.n)) ##calculates SE
+colnames(myData4) <- c("treatment", "mean", "sd", "n", "se") ##makes the column names more intuitive
+##orders the treatment variables
+myData4$treatment <- ordered(myData4$treatment, levels = c("Control", "Na", "Stover", "Stover & Na"))
+
+##creates names for variables by treatment and orders them the same way I have them in my data, already ordered above
+myData4$names <- factor(myData4$treatment, levels = myData4$treatment[order(myData4$treatment)])
+dodge <- position_dodge(width = 0.9)
+
+limits <- aes(ymax = myData4$mean + myData4$se, ymin = myData4$mean - myData4$se)##creates limits for errorbars
+lim4 <-1.5
+mbp <- ggplot(data = myData4, aes(x = names, y = mean, fill = names)) + ##sets up ggplot to 
+        geom_bar (stat = "identity" , position = dodge, width = bw, color = "black") + ## creates the barchart, width changes the width of the bars
+        geom_errorbar(limits, position = dodge, width = 0.15, size = 0.5) + ##creates error bars, limits is defined above as mean +- se, width changes how wide the whiskers on the bars go out, size changes the thickness of the bars
+        ppbar_theme()+
+        cb_pallet  + 
+         scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, lim4), breaks = c(0,lim4/3, lim4*(2/3), lim4)) +
+        labs ( y =bquote('µg P' ~g^-1~soil^-1*'')) + 
+        ggtitle("Microbial Biomass P") +
+        geom_text(                                         
+                aes(
+                        x = names,                                    
+                        y = (myData4$mean + myData4$se),
+                        label = c("a", "a", "a", "a"),
+                        family = "Times New Roman"),   
+                position = position_dodge(width = 1),
+                size = 12 * (5/14),
+                vjust = -0.5)       ##positions labels
+mbp
+```
+###multipannel plot
+```{r}
+png("ppoolspp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+ggarrange(tpt, sap, wsp, mbp, ##graphs to be arranged
+          ncol = 2, nrow = 2, ##number of columns and rows
+          align = "v")       ##align graphs vertically
+dev.off()
+```
+
+###exporting individual plots
+```{r}
+png("totalpp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+tpt
+dev.off()
+png("olsenpp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+sap
+dev.off()
+png("wsppp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+wsp
+dev.off()
+png("mbpp.png", width = 5.74, height = 3.42, unit = "in", res = 300)
+mbp
+dev.off()
+```
+
+
+##resin v. biomass
+###xyplot of resin v. co2
+```{r}
+dat2 <- subset(dc.plot, co2 != "NA" & p.resin != "NA")
+log.model1 <- lm(log(p.resin) ~ log(co2), data = dat2)
+log.model.df1 <- data.frame(x = dat2$co2, y = exp(fitted(log.model1)))
+rvr <- ggplot(data = dat2, aes(x = co2, y = p.resin))+
+        geom_point(aes(), size = 0.5) +
+       geom_line(data = log.model.df1, 
+                  aes(x, y), 
+                  color = "black", 
+                  size = 0.5) +
+        labs(y = bquote('µg P' ~cm^-2~day^-1*''), 
+             x = bquote ('µg' ~CO[2]-C~day^-1*'')) +
+        ggtitle("Microbial Respiration") +
+        annotate("text", x = 100, y = 0.052, 
+                 label = "p = 0.02\nSlope = 0.42",
+                 family = "Times New Roman",
+                 size = 20 * (5/14)) +
+        annotate("text", x = 100, y = 0.042, 
+                 label = "r ^ 2 == 0.12", parse = T,
+                 family = "Times New Roman",
+                 size = 20*(5/14)) +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 0.08), 
+                           breaks = c(0, 0.04, 0.08)) +
+                scale_x_continuous(expand = c(0,0), 
+                           limits = c(0, 210),
+                           breaks = c(0, 100, 200)) +
+        ppxy_theme()
+rvr
+
+summary(lm(log(p.resin) ~ log(co2), data = dc.plot))
+```
+
+###xyplot of phos v. resin
+```{r}
+dat3 <- subset(dc.plot, phos != "NA" & p.resin != "NA" & p.resin > 0)
+log.model2 <- lm(log(p.resin) ~ log(phos), data = dat3)
+log.model.df2 <- data.frame(x = dat3$phos, y = exp(fitted(log.model2)))
+rvp <- ggplot(data = dat3, aes(x = phos, y = p.resin))+
+        geom_point(aes(), size = 0.5) +
+        geom_line(data = log.model.df2, 
+                  aes(x, y), 
+                  color = "black", 
+                  size = 0.5) +
+        labs(x = bquote('nmol activity' ~g^-1~hr^-1*''), y = bquote('µg P' ~cm^-2~day^-1*'')) +
+        ggtitle("Phosphatase Activity") +
+        annotate("text", x = 42, y = 0.07, 
+                 label = "p < 0.01\nSlope = 1.01", 
+                 family = "Times New Roman",
+                  size = 20*(5/14)) +
+        annotate("text", x = 42, y = 0.06, 
+                 label = "r ^ 2 == 0.27", 
+                 parse = T, 
+                 family = "Times New Roman",
+                 size = 20*(5/14)) +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c(0, 0.08), 
+                           breaks = c(0, 0.04, 0.08)) +
+        scale_x_continuous(expand = c(0, 0),
+                           limits = c(0, 182),
+                           breaks = c(0, 172/2, 172))+
+        ppxy_theme() +
+        theme(axis.text.y = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks.y = element_blank())
+rvp
+
+summary(lm(log(p.resin) ~ log(phos), data = dc.plot))
+```
+
+###multi pannel of all three
+```{r}
+png("resinpp.png", width = 10, height = 6, unit = "in", res = 300)
+ggarrange(rvr, rvp, 
+          ncol = 2, nrow = 1, 
+          align = "v") 
+dev.off()
+```
+##abiotic and P pools
+###instantanous pH
+```{r}
+dat1 <- subset(dat, pH != "NA" & p.bicarb_total != "NA") 
+oip <- ggplot(data = dat1, aes(x = pH, y = 100*p.bicarb_total)) + 
+        geom_point(aes(), size = 0.5) +
+        ppxy_theme() +
+        scale_y_continuous(expand = c(0,0), 
+                           limits = c (0, 2.5))+
+        scale_x_continuous(expand = c(0,0))+
+        labs(y = "% P Olsen Extractable", x = "pH") +
+        ggtitle("Instantanous Olsen P v. pH")+
+        annotate("text", x = 7, y = 1.7, 
+                 label = "p = 0.23\nSlope = 0.18",
+                 family = "Times New Roman")
+oip
+```
+
+###change pH
+```{r}
+dat2 <- subset(dc.plot, pH != "NA" & p.bicarb.change != "NA") 
+ocp <- ggplot(data = dat2, aes(x = pH, y = p.bicarb.change)) + 
+        geom_point(aes(), size = 0.5) +
+        geom_smooth(aes(), method = "lm", se = F, color = "black" ) +
+        ppxy_theme() +
+        scale_y_continuous(expand = c(0,0), limits = c(-5, 20))+
+        scale_x_continuous(expand = c(0,0), limits = c(5.5, 8.1))+
+        labs(y =bquote('µg P' ~g^-1~soil^-1*''), x = "pH") +
+        ggtitle("Change in Olsen P v. pH")+
+        annotate("text", x = 6.8, y = 16, 
+                 label = "p = 0.05\nSlope = 2.57",
+                 family = "Times New Roman") +
+        annotate("text",
+                 x = 6.8, y = 13.5,
+                 label = "r ^ 2 == 0.04",
+                 parse = TRUE,
+                 family = "Times New Roman")
+ocp
+```
+###soil moisture v. water soluble P
+```{r}
+myData <- subset(dat, !is.na(p.h2o) & !is.na(moist.percent))
+log.model <- lm(log(p.h2o) ~ moist.percent, data = myData)
+log.model.df <- data.frame(x = myData$moist.percent, y = exp(fitted(log.model)))
+mwp <- ggplot(data = myData, aes(x = moist.percent, y = p.h2o)) +  
+        geom_point (aes(), size = 0.5) +  
+       geom_line(data = log.model.df, 
+          aes(x, y), 
+          color = "black", 
+          size = 0.5) +
+        ppxy_theme() +
+        labs(y =bquote('µg P' ~g^-1~soil^-1*''),x = "Moisture content (%)") + ##labels the axes
+        scale_y_continuous(expand = c(0,0), limits = c(0, 4)) + 
+        scale_x_continuous(expand = c(0, 0.1), limits = c(0, 25)) +
+        ggtitle("Water soluble P v. moisture content") +
+        annotate("text", x = 7.3, y = 3, 
+                 label = "p < 0.001\nSlope = 0.19",
+                 family = "Times New Roman") +
+        annotate("text", x = 7.3, y = 2.6,
+                 label = "r ^ 2 == 0.20",
+                 parse = TRUE,
+                 family = "Times New Roman")
+mwp
+summary(lm(p.h2o ~ moist, data = dat))
+```
+###p.absorb v. p.total
+```{r}
+dat1 <- subset(dat, p.total != "NA" & p.absorb != "NA")
+
+tota <- ggplot(data = dat1, aes(x = p.total, y = p.absorb))+
+        geom_point(aes(), size = 0.5) +
+        labs(x = bquote('µg P' ~g^-1~soil^-1*''), y = bquote('µg P' ~g^-1~soil^-1*'')) +
+        ggtitle("Salt adsorbed P v. Total P") +
+        geom_vline(xintercept = 875, linetype=2)+
+        ppxy_theme() +
+        scale_y_continuous(expand = c(0,0.1), limits = c(0, 5))
+tota
+```
+###multi-pannel
+```{r}
+png("abiopp.png", width = 10, height = 6, unit = "in", res = 300)
+ggarrange(oip, ocp, mwp, tota, ##graphs to be arranged
+          ncol = 2, nrow = 2, ##number of columns and rows
+          align = "v")       ##align graphs vertically
+dev.off()
+```
+###export pH
+```{r}
+png("phpp.png", width = 7, height = 4.5, unit = "in", res = 300)
+ggarrange(oip, ocp, ##graphs to be arranged
+          ncol = 2, nrow = 1, ##number of columns and rows
+          align = "v")       ##align graphs vertically
+dev.off()
+```
+
+###export water soluble
+```{r}
+png("watsolpp.png", width = 7, height = 4.5, unit = "in", res = 300)
+mwp
+dev.off()
+```
+###export adsorbed 
+```{r}
+png("abspp.png", width = 7, height = 4.5, unit = "in", res = 300)
+tota
+dev.off()
+```

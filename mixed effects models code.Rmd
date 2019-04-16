@@ -1,0 +1,1233 @@
+---
+title: "redoing mixed effects models"
+output:
+  html_document: default
+  html_notebook: default
+---
+#packages
+```{r}
+library(nlme)
+library(lsmeans)
+```
+
+#treatment effect on c.percent and Na+
+```{r}
+##c.percent
+hist(dat$c.percent)
+hist(log(dat$c.percent))
+bwplot(c.percent ~ treatment|bout, data = dat)
+barchart(c.percent ~ treatment | bout, data = dat)
+c1 <- lm((c.percent)  ~ treatment + bout, data = dat)
+summary(c1)
+plot(c1)
+##DOC
+hist(dat$toc.k2so4)
+hist(log(dat$toc.k2so4))
+c2 <- lm(log(toc.k2so4) ~ treatment * bout, data = dat)
+summary(c2)
+anova(c2)
+plot(c2)
+class(dat$bout)
+datc <- dat
+class(datc$bout)
+datc$bout <- as.factor(datc$bout)
+levels(datc$bout)
+datc$bout <-ordered(datc$bout, levels = c("20160930", "20160714", "20160910"))
+c3 <- lm(log(toc.h2o) ~ treatment * bout, data = datc)
+bwplot(toc.h2o ~ treatment|bout, data = dat)
+summary(c3)
+plot(c3)
+##NA
+na1 <- lm(na ~ treatment * bout, data = dat)
+summary(na1)
+anova(na1)
+xyplot(toc.k2so4 ~ toc.h2o | bout, data = dat, type = c("p"), groups = treatment, auto.key = T)
+```
+
+#microbial measurements
+##microbial respiration
+```{r}
+aggregate(co2~treatment + bout, data = dat, FUN = mean)
+mr4 <- lme(log(co2) ~ treatment * bout, random = ~1|field/block, data = subset(dat, co2 > 0.001), na.action = na.omit)
+summary(mr4)
+lsmeans(mr4, list(pairwise ~ treatment) )
+pairs(mr4)
+##getting the p-value for difference between stover and stover & Na
+dat5 <- dat
+print(levels(dat5$treatment))
+
+dat5$treatment <- ordered(dat5$treatment, levels = c("Stover", "Na", "Control", "Stover & Na"))
+levels(dat5$treatment)
+mr5 <- lme(log(co2) ~ treatment * bout, random = ~1|field/block, data = subset(dat5, co2 > 0.001), na.action = na.omit)
+summary(mr5)
+```
+
+##microbial biomass C
+```{r}
+mb1 <- lme(log(micro.c)~treatment * bout, random = ~1|field/block, data = subset(dat, micro.c > 0.0001), na.action = na.omit, method = "ML")
+summary(mb1)
+plot(mb1)
+qqnorm(mb1)
+qqnorm(resid(mb1))
+##no significant interaction
+mb2 <- lme(log(micro.c)~treatment + bout, random = ~1|field/block, data = subset(dat, micro.c > 0.0001), na.action = na.omit, method = "ML")
+summary(mb2)
+plot(mb2)
+qqnorm(mb2)
+anova(mb1, mb2)
+```
+
+
+
+##microbial biomass N
+```{r}
+mn1 <- lme(log(micro.n) ~ treatment * bout, random = ~1|field/block, data = subset(dat, micro.n > 0.001), na.action = na.omit)
+summary(mn1)
+##no significant interaction
+mn2 <- lme(log(micro.n) ~ treatment + bout, random = ~1|field/block, data = subset(dat, micro.n > 0.001), na.action = na.omit)
+summary(mn2)
+plot(mn2)
+qqnorm(mn2)
+qqnorm(resid(mn2))
+```
+
+##microbial biomass P
+```{r}
+mp2 <- lme(log(micro.p)~ treatment * bout, random = ~1|field/block, data = subset(dat, micro.p > 0.0001), na.action = na.omit)
+summary(mp2)
+##no significant interaction
+mp1 <- lme(log(micro.p)~ treatment + bout, random = ~1|field/block, data = subset(dat, micro.p > 0.0001), na.action = na.omit)
+summary(mp1)
+plot(mp1)
+qqnorm(mp1)
+```
+
+##enzyme activities
+###total enzyme activity
+```{r}
+te1 <- lme(log(enz.tot) ~ treatment * bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(te1)
+plot(te1)
+qqnorm(te1)
+aggregate(enz.tot~treatment + bout, data = dat, FUN = mean)
+bwplot(enz.tot ~ treatment| bout, data = dat)
+```
+
+
+###bg activities
+
+```{r}
+bg1 <- lme(log(bg) ~ treatment * bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(bg1)
+plot(bg1)
+qqnorm(bg1)
+aggregate(bg~treatment + bout, data = dat, FUN = function(x) c(mean=mean(x), sd = sd(x), n = length(x)))
+bwplot(bg~treatment | bout, data = dat)
+```
+
+###N aq actiities
+```{r}
+nq1 <- lme(log(n.acquire) ~ treatment * bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(nq1)
+plot(nq1)
+qqnorm(nq1)
+bwplot(n.acquire ~ treatment|bout, data = dat)
+```
+
+###phos activities
+```{r}
+phos1 <- lme(log(phos) ~ treatment * bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(phos1)
+plot(phos1)
+qqnorm(phos1)
+bwplot(phos~treatment|bout, data = dat)
+```
+
+
+
+
+#invert measurements
+##overall abundance
+```{r}
+a1 <- glmer(abundance ~ treatment + (1|field/block), data = com.plot, na.action = na.omit, family = poisson)
+summary(a1)
+plot(a1)
+qqnorm(resid(a1))
+mean(na.omit(group.sum$abundance[group.sum$treatment == "Control"]))
+plot(abundance ~ treatment, data = com.plot)
+```
+
+##predator
+```{r}
+p1 <- glmer(predator ~ treatment + (1|field/block), data = group.sum, na.action = na.omit, family = poisson)
+summary(p1)
+plot(p1)
+qqnorm(resid(p1))
+group.sum$block
+```
+
+##scavanger
+```{r}
+s1 <- glmer(scavenger ~ treatment + (1|field/block), data = group.sum, na.action = na.omit, family = poisson)
+summary(s1)
+plot(s1)
+qqnorm(resid(s1))
+```
+
+##herbivore
+```{r}
+h1 <- glmer(herbivore ~ treatment + (1|field/block), data = group.sum, na.action = na.omit, family = poisson)
+summary(h1)
+plot(h1)
+qqnorm(resid(h1))
+```
+
+
+
+#p pools v. treatment
+##p.h2o
+```{r}
+ph1 <- lme(log(p.h2o) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(ph1)
+plot(ph1)
+qqnorm(ph1)
+
+```
+##p.absorbed
+```{r}
+pa1 <- lme(log(p.absorb) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pa1)
+plot(pa1)
+qqnorm(pa1)
+```
+
+##p.bicarb
+```{r}
+pb1 <- lme(log(p.bicarb) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pb1)
+plot(pb1)
+qqnorm(pb1)
+```
+
+
+##p.base
+```{r}
+pba1 <- lme(log(p.base) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pba1)
+plot(pba1)
+qqnorm(pba1)
+```
+
+
+##p.bound
+```{r}
+pbo1 <- lme(log(p.bound) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pbo1)
+pbo2 <- lme(log(p.bound) ~ treatment + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pbo2)
+plot(pbo2)
+qqnorm(pbo2)
+```
+
+##p.total
+```{r}
+pt1 <- lme(log(p.total) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pt1)
+pt2 <- lme(log(p.total) ~ treatment + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pt2)
+plot(pt2)
+qqnorm(pt2)
+bwplot(p.total~treatment|field+bout, data = dat)
+```
+
+##p.resin
+```{r}
+pr1 <- lme(log(p.resin) ~ treatment + moist + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(pr1)
+plot(pr1)
+qqnorm(pr1)
+```
+
+##p.micro
+```{r}
+pm1 <- lme(log(micro.p) ~ treatment + moist.percent + pH + bout, random = ~1|field/block, data = subset(dat, micro.p > 0.000001), na.action = na.omit)
+plot(pm1)
+qqnorm(pm1)
+summary(pm1)
+```
+
+
+#p pool proportions
+##p.h2o/total
+```{r}
+pht1 <- lme(log(p.h2o_total) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pht1)
+dat$moist.percent <- 100*dat$moist
+pht2 <- lme(log(p.h2o_total) ~ treatment + moist.percent + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pht2)
+plot(pht2)
+qqnorm(pht2)
+bwplot(p.h2o_total ~ bout|block, data = dat)
+```
+##p.absorb_total
+```{r}
+pat1 <- lme(log(p.absorb_total) ~ treatment + moist.percent + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pat1)
+plot(pat1)
+qqnorm(pat1)
+```
+So this model doesn't work very well
+###dealing with the threshold
+so overall, the k2so4 P pool is not significantly different from the water-extractable pool. However, this relationship breaks down above a certain threshold. Let's try to figure out what that threshold is.
+
+```{r}
+xyplot(p.k2so4~p.total, data = dat)
+xyplot(p.absorb ~ p.total, data = dat)
+t.test(dat$p.k2so4, dat$p.h2o, paired = T)
+hp1 <- subset(dat, p.total > 875)
+t.test(hp1$p.k2so4, hp1$p.h2o, paired = T)
+hp2 <- subset(dat, p.total > 900)
+t.test(hp2$p.k2so4, hp2$p.h2o, paired = T)
+hp3 <- subset(dat, p.total > 880)
+t.test(hp3$p.k2so4, hp3$p.h2o, paired = T)
+xyplot(p.k2so4 ~ p.total, data = hp1, groups = treatment)
+xyplot(p.k2so4 ~ p.total, data = hp2)
+xyplot(p.k2so4 ~ p.total, data = hp3)
+```
+
+Okay, so a threshold around 875 seems reasonable
+
+```{r}
+bwplot(p.absorb_total~treatment, data = hp1)
+bwplot(p.absorb_total~treatment | bout, data = hp1)
+summary(aov(p.absorb_total ~ treatment, data = hp1))
+summary(lm(p.absorb_total ~ treatment + bout, data = hp1))
+a1 <- lme(log(p.absorb_total) ~ treatment + moist.percent + pH + bout, random = ~1|field, data = hp1, na.action = na.omit)
+plot(a1)
+qqnorm(a1)
+summary(a1)
+xyplot(p.absorb ~ p.total, data = hp1, groups = treatment, type = c("p", "r"))
+```
+
+
+
+##p.bicarb_total
+```{r}
+pot1 <- lme(log(p.bicarb_total) ~ treatment + moist.percent + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pot1)
+plot(pot1)
+qqnorm(pot1)
+```
+
+##p.base_total
+```{r}
+pbt1 <- lme(log(p.base_total) ~ treatment + moist + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pbt1)
+plot(pbt1)
+qqnorm(pbt1)
+```
+
+
+##p.bound
+```{r}
+pbt1 <- lme(log(p.bound_total) ~ treatment + moist.percent + pH + bout, random = ~1|field/block, data = dat, na.action = na.omit)
+summary(pbt1)
+plot(pbt1)
+qqnorm(pbt1)
+```
+
+
+##micro.p
+```{r}
+pmt1 <- lme(log(micro.p_total) ~ treatment + moist + pH + bout, random = ~1|field/block, data = subset(dat, micro.p > 0.00001), na.action = na.omit)
+summary(pmt1)
+```
+
+#changes in p pools
+##p.h2o
+```{r}
+phc1 <- lme((p.h2o.change) ~ treatment + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(phc1)
+plot(phc1)
+qqnorm(phc1)
+```
+
+##p.absorb
+```{r}
+pac1 <- lme((p.absorb.change) ~ treatment + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(pac1)
+qqnorm(pac1)
+plot(pac1)
+xyplot(p.absorb.change ~ p.total, data = dc.plot)
+View(b1)
+```
+
+okay, but again it looks like we don't have a significant pool when p.total > 875. So let's do that again
+
+###desling with  threshold
+```{r}
+pac2 <- lme((p.absorb.change) ~ treatment, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+plot(pac2)
+qqnorm(pac2)
+summary(pac2)
+xyplot(p.absorb.change ~ p.total|field, data = subset(dc.plot, p.total > 875), groups = treatment, auto.key = T)
+```
+
+##p.bicarb
+```{r}
+poc1 <- lme((p.bicarb.change) ~ treatment + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(poc1)
+plot(poc1)
+qqnorm(poc1)
+```
+
+
+##p.base
+```{r}
+pbc1 <- lme((p.base.change) ~ treatment + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(pbc1)
+plot(pbc1)
+qqnorm(pbc1)
+```
+
+##p.bound
+```{r}
+pnc1 <- lme((p.bound.change) ~ treatment + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(pnc1)
+plot(pnc1)
+qqnorm(pnc1)
+```
+
+##p.total
+```{r}
+ptc1 <- lme((p.total.change) ~ treatment + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(ptc1)
+plot(ptc1)
+qqnorm(ptc1)
+```
+
+
+
+#p pools v. micro
+##p.h2o
+###p.h2o v. co2
+```{r}
+hr1 <- lme(log(p.h2o_total) ~ log(co2) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(hr1)
+plot(hr1)
+qqnorm(hr1)
+```
+
+###p.h2o v. biomass
+```{r}
+hc1 <- lme(log(p.h2o_total) ~ log(micro.c) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(hc1)
+plot(hc1)
+qqnorm(hc1)
+hc2 <- lme(log(p.h2o_total) ~ log(micro.c) + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(hc2)
+plot(hc2)
+qqnorm(hc2)
+```
+
+
+###p.h2o v. phos
+```{r}
+hp1 <- lme(log(p.h2o_total) ~ log(phos) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(hp1)
+hp2 <- lme(log(p.h2o_total) ~ log(phos) + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(hp2)
+```
+
+
+##p.absorb
+###p.absorb v. co2
+```{r}
+ra1 <- lme(log(p.absorb_total) ~ log(co2) + pH + moist.percent + bout, random = ~1|field/plot, data = subset(dat, p.total > 875), na.action = na.omit)
+summary(ra1)
+plot(ra1)
+qqnorm(ra1)
+```
+###p.absorb v. micro.c
+```{r}
+ca1 <- lme(log(p.absorb_total) ~ log(micro.c) + pH + moist.percent + bout, random = ~1|field/plot, data = subset(dat, p.total > 875), na.action = na.omit)
+summary(ca1)
+plot(ca1)
+qqnorm(ca1)
+```
+###p.absorb v. phos
+```{r}
+pa1 <- lme(log(p.absorb_total) ~ log(phos) + pH + moist.percent + bout, random = ~1|field/plot, data = subset(dat, p.total > 875), na.action = na.omit)
+summary(pa1)
+plot(pa1)
+qqnorm(pa1)
+```
+
+
+##p.bicarb
+###p.bicarb v. co2
+```{r}
+or1 <- lme(log(p.bicarb_total) ~ log(co2) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(or1)
+plot(or1)
+qqnorm(or1)
+```
+###p.bicarb v. biomass
+```{r}
+oc1 <- lme(log(p.bicarb_total) ~ log(micro.c) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(oc1)
+plot(oc1)
+qqnorm(oc1)
+```
+###p.bicarb v. phos
+
+```{r}
+op1 <- lme(log(p.bicarb_total) ~ log(phos) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(op1)
+qqnorm(op1)
+plot(op1)
+```
+
+##p.base
+###p.base v. co2
+```{r}
+bc1 <- lme(log(p.base_total) ~ log(co2) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(bc1)
+plot(bc1)
+qqnorm(bc1)
+```
+
+###p.base v. micro.c
+```{r}
+bb1 <- lme(log(p.base_total) ~ log(micro.c) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(bb1)
+plot(bb1)
+qqnorm(bb1)
+```
+
+###p.base v. phos
+```{r}
+bp1 <- lme(log(p.base_total) ~ log(phos) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(bp1)
+plot(bp1)
+qqnorm(bp1)
+```
+
+##p.bound
+###p.bound v. co2
+```{r}
+br1 <- lme(log(p.bound_total) ~ log(co2) + pH +  bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(br1)
+qqnorm(br1)
+plot(br1)
+```
+###p.bound v. micro.c
+```{r}
+bc1 <- lme(log(p.bound_total) ~ log(micro.c) + pH + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(bc1)
+plot(bc1)
+```
+
+###p.bound v. phos
+```{r}
+bp1 <- lme(log(p.bound_total) ~ log(phos) + pH + moist.percent + bout, random = ~1|field/plot, data = dat, na.action = na.omit)
+summary(bp1)
+plot(bp1)
+qqnorm(bp1)
+```
+
+
+##p.resin
+###p.resin v.  average co2
+```{r}
+prr1 <- lme(log(p.resin) ~ log(co2) + pH, random = ~1|field, data = dc.plot, na.action = na.omit)
+summary(prr1)
+plot(prr1)
+qqnorm(prr1)
+xyplot(p.resin ~ co2, data = dc.plot, type = c("p", "r"))
+hist(log(dc.plot$p.resin))
+```
+###p.resin v. micro.c
+```{r}
+prc1 <- lme(log(p.resin) ~ log(micro.c) + pH, random = ~1|field, data = dc.plot, na.action = na.omit)
+summary(prc1)
+plot(prc1)
+qqnorm(prc1)
+```
+
+###p.resin v. phos
+```{r}
+prp1 <- lme(log(p.resin) ~ log(phos) + pH, random = ~1|field, data = dc.plot, na.action = na.omit)
+summary(prp1)
+```
+
+
+#p pools v. invert
+##p.h2o v. invert
+###p.h2o v. abundance
+```{r}
+ah1 <- lme(p.h2o ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(ah1)
+plot(ah1)
+qqnorm(ah1)
+```
+###p.h2o v. herbivore
+```{r}
+hh1 <- lme(p.h2o ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(hh1)
+plot(hh1)
+qqnorm(hh1)
+```
+###p.h2o v. predator
+```{r}
+ph1  <- lme(p.h2o ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(ph1)
+plot(ph1)
+qqnorm(ph1)
+```
+
+###p.h2o v. scavenger
+```{r}
+sh1 <- lme(p.h2o ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(sh1)
+plot(sh1)
+qqnorm(sh1)
+```
+
+##p.absorb v. invert
+###p.absorb v. abundance
+```{r}
+aa1 <- lme(p.absorb_total ~ abundance.x + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+plot(aa1)
+qqnorm(aa1)
+summary(aa1)
+xyplot(p.absorb ~ abundance.x, data = subset(dc.plot, p.total > 875))
+```
+###p.absorb v. herbivore
+```{r}
+ha1 <- lme(p.absorb_total ~ herbivore, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+summary(ha1)
+xyplot(p.absorb_total ~ herbivore, data = dc.plot)
+plot(ha1)
+qqnorm(ha1)
+xyplot(p.absorb_total ~ p.total, data = dc.plot)
+xyplot(p.total ~ herbivore, data = subset(dc.plot, p.total > 875))
+xyplot(p.total ~ herbivore, data = dc.plot)
+xyplot(herbivore~ p.total, data = dc.plot, group = field)
+```
+###p.absorb v. predator
+```{r}
+pa1 <- lme(p.absorb_total ~ predator, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+summary(pa1)
+plot(pa1)
+qqnorm(pa1)
+xyplot(p.absorb_total ~ predator, data = subset(dc.plot,p.total > 875), type = c("p", "r"))
+```
+###p.absorb v. scavenger
+```{r}
+sa1 <- lme(p.absorb_total ~ scavenger, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+summary(sa1)
+qqnorm(sa1)
+plot(sa1)
+xyplot(p.absorb_total ~ scavenger, data = subset(dc.plot, p.total > 875))
+hist(dc.plot$scavenger)
+```
+
+##p.olsen v. fauna
+###p.olsen v. abundance
+```{r}
+oa1 <- lme(p.bicarb_total ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(oa1)
+plot(oa1)
+qqnorm(oa1)
+```
+###p.olsen v. herbivore
+```{r}
+oh1 <- lme(p.bicarb_total ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(oh1)
+plot(oh1)
+qqnorm(oh1)
+```
+###p.olsen v. predator
+```{r}
+op1 <- lme(p.bicarb_total ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(op1)
+qqnorm(op1)
+summary(op1)
+```
+###p.olsen v. scavenger
+```{r}
+os1 <- lme(p.bicarb_total ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+qqnorm(os1)
+plot(os1)
+summary(os1)
+```
+
+##p.base v. fauna
+###p.base v.abundance
+```{r}
+ba1 <- lme(p.base_total ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(ba1)
+qqnorm(ba1)
+summary(ba1)
+xyplot(p.base_total ~ abundance.x, data = dc.plot)
+```
+###p.base v. herbivore
+```{r}
+bh1 <- lme(p.base_total ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(bh1)
+qqnorm(bh1)
+xyplot(p.base_total ~ herbivore, data = dc.plot, type = c("p", "r"))
+summary(bh1)
+```
+###p.base v. predator
+```{r}
+bp1 <- lme(p.base_total ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(bp1)
+qqnorm(bp1)
+xyplot(p.base_total ~ predator, data = dc.plot, type = c("p", "r"))
+summary(bp1)
+```
+###p.base v. scavenger
+```{r}
+bs1 <- lme(p.base_total ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(bs1)
+qqnorm(bs1)
+xyplot(p.base_total ~ scavenger, data = dc.plot, type = c("p", "r"))
+summary(bs1)
+```
+
+
+
+###p.bound v. fauna
+```{r}
+na1 <- lme(p.bound_total ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(na1)
+qqnorm(na1)
+summary(na1)
+```
+###p.bound v. herbivore
+```{r}
+nh1 <- lme(p.bound_total ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(nh1)
+qqnorm(nh1)
+summary(nh1)
+```
+
+###p.bound v. predator
+```{r}
+np1 <- lme(p.bound_total ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(np1)
+qqnorm(np1)
+summary(np1)
+```
+
+###p.bound v. scavenger
+```{r}
+ns1 <- lme(p.bound_total ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(ns1)
+qqnorm(ns1)
+summary(ns1)
+```
+
+##p.total v. fauna
+###p.total v. abundance
+```{r}
+ta1 <- lme(p.total ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(ta1)
+xyplot(p.total~abundance, data = dc.plot)
+qqnorm(ta1)
+summary(ta1)
+```
+###p.total v. herbivore
+```{r}
+ha1 <- lme(p.total ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(ha1)
+xyplot(p.total ~ herbivore, data = dc.plot)
+qqnorm(ha1)
+summary(ha1)
+```
+##p.resin v. fauna
+###p.resin v. abundance
+```{r}
+ap1 <- lme((log(p.resin)) ~ abundance + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.resin ~ abundance, data = dc.plot, group = field)
+plot(ap1)
+qqnorm(ap1)
+summary(ap1)
+```
+###p.resin v. herbivore
+```{r}
+hr1 <- lme(log(p.resin) ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.resin ~herbivore, data = dc.plot, group = field)
+plot(hr1)
+qqnorm(hr1)
+summary(hr1)
+```
+###p.resin v. predator
+```{r}
+pr1 <- lme(log(p.resin) ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.resin ~ predator, data = dc.plot, groups = field)
+plot(pr1)
+qqnorm(pr1)
+summary(pr1)
+```
+
+###p.resin v. scavenger
+```{r}
+sr1 <- lme(log(p.resin) ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.resin ~ scavenger, data = dc.plot)
+plot(sr1)
+qqnorm(sr1)
+summary(sr1)
+```
+
+###p.total v. predator
+```{r}
+tp1 <- lme(p.total ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(tp1)
+xyplot(p.total ~ predator, data = dc.plot)
+qqnorm(tp1)
+summary(tp1)
+```
+###p.total v. scavenger
+```{r}
+ts1 <- lme(p.total ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(ts1)
+qqnorm(ts1)
+xyplot(p.total ~scavenger, data = dc.plot)
+summary(ts1)
+```
+
+#p.change v. micro
+##p.h2o.change v. micro
+###p.h2o.change v. respiration
+```{r}
+phr1 <- lme((p.h2o.change) ~ co2 + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.h2o.change ~ co2, data = dc.plot)
+plot(phr1)
+qqnorm(phr1)
+summary(phr1)
+```
+
+###p.h2o.change v. biomass
+```{r}
+phc1 <- lme((p.h2o.change) ~ micro.c + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(phc1)
+qqnorm(phc1)
+summary(phc1)
+```
+
+###p.h2o.change v. phos
+```{r}
+php1 <- lme((p.h2o.change) ~ phos + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(php1)
+xyplot(p.h2o.change ~ phos, data = dc.plot)
+qqnorm(php1)
+summary(php1)
+```
+
+##p.adsorb change v. micro
+### p.adsorb change v. respiration
+```{r}
+arc1 <- lme(p.absorb.change ~ co2 + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+summary(arc1)
+plot(arc1)
+qqnorm(arc1)
+arc2 <- lm(p.absorb.change ~ co2 + pH + block, data = subset(dc.plot, p.total > 875))
+summary(arc2)
+plot(arc2)
+```
+###p.adsorb change v. biomass
+```{r}
+acc1 <- lme(p.absorb.change ~ micro.c + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+summary(acc1)
+plot(acc1)
+qqnorm(acc1)
+acc2 <- lm(p.absorb.change ~ micro.c + pH + block, data = subset(dc.plot, p.total > 875))
+summary(acc2)
+plot(acc2)
+```
+###p.absorb chagne v. phos
+```{r}
+acc1 <- lme(p.absorb.change ~phos + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+summary(acc1)
+plot(acc1)
+qqnorm(acc1)
+```
+
+
+##p.bicarb.change v. micro
+###p.bicarb.change v. co2
+```{r}
+occ1 <- lme((p.bicarb.change) ~ co2 + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(occ1)
+plot(occ1)
+qqnorm(occ1)
+```
+
+###p.bicarb.chagne v. micro.c
+```{r}
+omc1 <- lme((p.bicarb.change) ~ micro.c + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+summary(omc1)
+plot(omc1)
+qqnorm(omc1)
+```
+
+###p.bicarb.change v. phos
+```{r}
+ocp1 <- lme((p.bicarb.change) ~ phos + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(ocp1)
+qqnorm(ocp1)
+summary(ocp1)
+```
+
+##p.base.change v. micro
+###p.base chagne v. co2
+```{r}
+bcr1 <- lme((p.base.change) ~ co2 + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(bcr1)
+qqnorm(bcr1)
+xyplot(p.base.change ~ co2, data = dc.plot, group = field)
+xyplot(p.base.change ~ co2 | field, data = dc.plot)
+summary(bcr1)
+```
+###p.base change v. micro.c
+```{r}
+bcc1 <- lme((p.base.change) ~ micro.c + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(bcc1)
+qqnorm(bcc1)
+xyplot(p.base.change ~ micro.c, group = field, data = dc.plot)
+summary(bcc1)
+```
+
+###p.base.change v. phos
+```{r}
+bcp1 <- lme((p.base.change) ~ phos + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+plot(bcp1)
+qqnorm(bcp1)
+xyplot(p.base.change ~ phos, group = field, data = dc.plot)
+summary(bcp1)
+```
+##b.bound.change v. micro
+###p.bound.change v. co2
+```{r}
+ucr1 <- lme((p.bound.change) ~ co2 + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ co2, data = dc.plot, groups = field)
+plot(ucr1)
+qqnorm(ucr1)
+summary(ucr1)
+```
+
+###p.base.change v. micro.c
+```{r}
+ucm1 <- lme((p.bound.change) ~ micro.c + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ micro.c, groups = field, data = dc.plot)
+plot(ucm1)
+qqnorm(ucm1)
+summary(ucm1)
+```
+###p.base.change v. phos
+```{r}
+ucp1 <- lme((p.bound.change) ~ phos + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ phos, groups = field, data = dc.plot)
+xyplot(p.bound.change ~ phos | field, data = dc.plot)
+plot(ucp1)
+qqnorm(ucp1)
+summary(ucp1)
+```
+
+
+
+##p.total.change v. micro
+###p.total change .v. respiration
+```{r}
+tcr1 <- lme((p.total.change) ~ co2 + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ co2, groups = field, data = dc.plot)
+plot(tcr1)
+qqnorm(tcr1)
+summary(tcr1)
+```
+
+###p.total change v. micro.c
+```{r}
+tcm1 <- lme((p.total.change) ~ micro.c + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ micro.c, groups = field, data = dc.plot)
+plot(tcm1)
+qqnorm(tcm1)
+summary(tcm1)
+```
+
+
+###p.total change v. phos
+```{r}
+tcp1 <- lme((p.total.change) ~ phos + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ phos, groups = field, data = dc.plot)
+plot(tcp1)
+qqnorm(tcp1)
+summary(tcp1)
+```
+
+
+
+#p.change v. invert
+##p.h2o.change v. invert
+###delta.h2o v. total
+```{r}
+hca1 <- lme(p.h2o.change ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.h2o.change ~ abundance.x, group = field, data = dc.plot)
+plot(hca1)
+qqnorm(hca1)
+summary(hca1)
+```
+
+###chang.h2o v. herb
+```{r}
+hch1 <- lme(p.h2o.change ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.h2o.change ~ herbivore, group = field, data = dc.plot)
+plot(hch1)
+qqnorm(hch1)
+summary(hch1)
+```
+
+###change.h2o v. pred
+
+```{r}
+hcp1 <- lme(p.h2o.change ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.h2o.change ~ predator, group = field, data = dc.plot)
+plot(hcp1)
+qqnorm(hcp1)
+summary(hcp1)
+```
+
+###h2o.change v. scavang
+```{r}
+hcs1 <- lme(p.h2o.change ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.h2o.change ~ scavenger, group = field, data = dc.plot)
+plot(hcs1)
+qqnorm(hcs1)
+summary(hcs1)
+```
+
+##p.absorb.change v. fauna
+###p.absorb.change v. all
+```{r}
+aca1 <- lme(p.absorb.change ~ abundance.x + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+xyplot(p.h2o.change ~ abundance.x, group = field, data = subset(dc.plot, p.total > 875))
+plot(aca1)
+qqnorm(aca1)
+summary(aca1)
+```
+###p.absorb.change v. herbivore
+```{r}
+ach1 <- lme(p.absorb.change ~ herbivore + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+xyplot(p.h2o.change ~ herbivore, group = field, data = subset(dc.plot, p.total > 875))
+plot(ach1)
+qqnorm(ach1)
+summary(ach1)
+```
+###p.absorb chane v. predator
+```{r}
+acp1 <- lme(p.absorb.change ~ predator + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+
+xyplot(p.h2o.change ~ herbivore, group = field, data = subset(dc.plot, p.total > 875))
+plot(acp1)
+qqnorm(acp1)
+summary(acp1)
+```
+###p.absorb.change v. scavanger
+```{r}
+acp1 <- lme(p.absorb.change ~ scavenger + pH, random = ~1|field/block.x, data = subset(dc.plot, p.total > 875), na.action = na.omit)
+
+xyplot(p.h2o.change ~ scavenger, group = field, data = subset(dc.plot, p.total > 875))
+plot(acp1)
+qqnorm(acp1)
+summary(acp1)
+```
+
+
+
+##p.olsen.change v. fauna
+###p.olsen.change v. all
+```{r}
+oca1 <- lme(p.bicarb.change ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bicarb.change ~ abundance.x, group = field, data = dc.plot)
+plot(oca1)
+qqnorm(oca1)
+summary(oca1)
+```
+
+###p.olsen.change v. herb
+```{r}
+och1 <- lme(p.bicarb.change ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bicarb.change ~ herbivore, group = field, data = dc.plot)
+plot(och1)
+qqnorm(och1)
+summary(och1)
+```
+
+###p.olsen.change v. predator
+```{r}
+ocp1 <- lme(p.bicarb.change ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bicarb.change ~ predator, group = field, data = dc.plot)
+plot(ocp1)
+qqnorm(ocp1)
+summary(ocp1)
+```
+###olsen.change v. scavenger
+```{r}
+ocs1 <- lme(p.bicarb.change ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bicarb.change ~ scavenger, group = field, data = dc.plot)
+plot(ocs1)
+qqnorm(ocs1)
+summary(ocs1)
+```
+
+##base.change v fauna
+###base.change v. all
+```{r}
+bca1 <- lme(p.base.change ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.base.change ~ abundance.x, group = field, data = dc.plot)
+plot(bca1)
+qqnorm(bca1)
+summary(bca1)
+```
+
+###base change v. herb
+```{r}
+bch1 <- lme(p.base.change ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.base.change ~ herbivore, group = field, data = dc.plot)
+summary(bch1)
+plot(bch1)
+qqnorm(bch1)
+```
+
+###base change v. predator
+```{r}
+bcp1 <- lme(p.base.change ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.base.change ~ predator, group = field, data = dc.plot)
+plot(bcp1)
+qqnorm(bcp1)
+summary(bcp1)
+```
+
+###base change v. scavanger
+```{r}
+bcs1 <- lme(p.base.change ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.base.change ~ scavenger, group = field, data = dc.plot)
+qqnorm(bcs1)
+plot(bcs1)
+summary(bcs1)
+```
+
+##bound.change v. fauna
+###bound chnage v. all
+```{r}
+uca1 <- lme(p.bound.change ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ abundance.x, group = field, data = dc.plot)
+plot(uca1)
+qqnorm(uca1)
+summary(uca1)
+```
+
+###bound change v. herb
+```{r}
+uch1 <- lme(p.bound.change ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ herbivore, group = field, data = dc.plot)
+plot(uch1)
+qqnorm(uch1)
+summary(uch1)
+```
+
+###bound chagne v. pred
+```{r}
+ucp1 <- lme(p.bound.change ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ predator, group = field, data = dc.plot)
+plot(ucp1)
+qqnorm(ucp1)
+summary(ucp1)
+```
+
+###p.bound.change v. scavenger
+```{r}
+ucs1 <- lme(p.bound.change ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.bound.change ~ scavenger, group = field, data = dc.plot)
+plot(ucs1)
+qqnorm(ucs1)
+summary(ucs1)
+```
+
+##p.total.change v. fauna
+###p.total.change v. all
+```{r}
+tca1 <- lme(p.total.change ~ abundance.x + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ abundance.x, group = field, data = dc.plot)
+plot(tca1)
+qqnorm(tca1)
+summary(tca1)
+```
+
+###p.total.change v. herb
+```{r}
+tch1 <- lme(p.total.change ~ herbivore + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ herbivore, group = field, data = dc.plot)
+plot(tch1)
+qqnorm(tch1)
+summary(tch1)
+```
+
+###p.total chagne v. predator
+```{r}
+tcp1 <- lme(p.total.change ~ predator + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ predator, group = field, data = dc.plot)
+plot(tcp1)
+qqnorm(tcp1)
+summary(tcp1)
+```
+
+###p.total change v. scavenger
+```{r}
+tcs1 <- lme(p.total.change ~ scavenger + pH, random = ~1|field/block.x, data = dc.plot, na.action = na.omit)
+xyplot(p.total.change ~ scavenger, group = field, data = dc.plot)
+plot(tcs1)
+qqnorm(tcs1)
+summary(tcs1)
+```
+
+
+
+
+
+
+#calculating which samples have statistically significant salt-adsorbed P pools
+a statistically significant salt-absorbed P pool would be a sample where the pool is more than 2 standard deviations away from zero. 
+```{r}
+xyplot(p.k2so4 - p.h2o ~ p.total, data = dat)
+t.test(dat$p.k2so4, dat$p.h2o, paired = TRUE, na.action = na.omit)
+stdev <- sd(na.omit(dat$p.k2so4 - dat$p.h2o))
+n <- length(na.omit(dat$p.k2so4 - dat$p.h2o))
+se <- stdev/sqrt(n)
+2*se
+dat.sigab <- (subset(dat, p.absorb > stdev))
+length(dat.sigab$p.k2so4)
+m <- mean(na.omit(dat$p.k2so4 - dat$p.h2o))
+xyplot(p.absorb ~ p.total, data = dat.sigab)
+xyplot(p.k2so4 ~ p.h2o, data = dat)
+max(dat$pH)
+```
+
+
+##soil microbes v. fauna
+```{r}
+xyplot(co2~abundance, data = dc.plot)
+xyplot(co2~abundance | treat.stover.x, data = dc.plot, type = c("p", "r"))
+xyplot(micro.c~abundance | treat.stover.x, data = dc.plot, type = c("p", "r"))
+summary(lm(co2~abundance * treatment, data = dc.plot))
+bwplot(toc.k2so4 ~ treatment|bout , data = dat)
+bwplot(toc.h2o ~ treatment | bout, data = dat)
+bwplot(c.percent ~ treatment | bout, data = dat)
+bwplot(micro.c ~ treatment | bout + field, data = dat)
+bwplot(p.h2o ~ factor(block) | bout, data = dat)
+summary(lm(toc.k2so4 ~ treatment + bout, data = dat))
+```
+
