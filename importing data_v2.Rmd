@@ -1,0 +1,393 @@
+###Packages
+```{r packages required, echo = F, eval = F}
+library(arm)
+library(reshape)
+library(reshape2)
+library(lattice)
+library(ggplot2)
+library(MASS)
+library(nlme)
+library(lme4)
+library(grid)
+library(ggpubr)
+library(extrafont)
+```
+
+##custom functions
+```{r}
+as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
+```
+
+##importing and cleaning up data
+```{r Importing and cleaning up data, echo = F}
+##read in the data
+
+##nutrient data
+dat <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/summary.Na_addition.soil_samples.csv")
+
+##cleaning up invalid data points
+##sample had gdry_gwet greater than 1, subsequent measurements no good
+
+##replacing column name "sample" with plot for consistancy
+colnames(dat)[3] <- "plot"
+
+##replacing letter codes with NA values (note that NS means that their is insufficient sample, NR means that the sample needs rerun. For the purposes of data analysis, both of these values are coded as NA, but for the purposes of sample processing these categoreis are kept seporate.)
+dat[dat=="NR"] <- NA
+dat[dat=="NS"] <- NA
+dat[dat==""] <- NA
+
+##making variables numeric
+dat$p.bicarb <- as.numeric(as.character(dat$p.bicarb))
+dat$p.h2o <- as.numeric(as.character(dat$p.h2o))
+dat$p.fum <- as.numeric(as.character(dat$p.fum))
+dat$p.k2so4 <- as.numeric(as.character(dat$p.k2so4))
+dat$toc.k2so4 <- as.numeric(as.character(dat$toc.k2so4))
+dat$tn.k2so4 <- as.numeric(as.character(dat$tn.k2so4))
+dat$toc.h2o <- as.numeric(as.character(dat$toc.h2o))
+dat$tn.h2o <- as.numeric(as.character(dat$tn.h2o))
+dat$fum.c <- as.numeric(as.character(dat$fum.c))
+dat$fum.n <- as.numeric(as.character(dat$fum.n))
+
+##making factor variables factors
+dat$treat.stover <- as.factor(dat$treat.stover)
+dat$treat.na <- as.factor(dat$treat.na)
+
+##making variables more readable
+dat$treatment <- as.character(dat$treatment)
+dat[dat == "cont"] <- "Control"
+dat[dat == "na"] <- "Na"
+dat[dat == "corn"] <- "Stover"
+dat[dat == "both"] <- "Stover & Na"
+dat$treatment <- as.factor(dat$treatment)
+
+##replacing bout numbers with dates
+dat$bout[dat$bout == 1] <- "20160714"
+dat$bout[dat$bout == 2] <- "20160910"
+dat$bout[dat$bout == 3] <- "20160930"
+
+##make dates actual dates
+dat$datecode <- as.Date(as.character(dat$datecode), "%Y%m%d")
+dat$day <- format(dat$datecode, "%d-%b")
+
+##creating microbial c, n, and p columns
+
+dat$micro.p <- dat$p.fum - dat$p.k2so4
+dat$micro.p[dat$micro.p < 0 ] <- 0.000001
+dat$micro.c <- dat$fum.c - dat$toc.k2so4
+dat$micro.n <- dat$fum.n - dat$tn.k2so4
+dat$micro.c[dat$micro.c < 0] <- 0.000001
+dat$micro.n[dat$micro.n < 0 ] <- 0.000001
+dat$p.absorb <- dat$p.k2so4 - dat$p.h2o
+dat$p.absorb[dat$p.absorb<0] <- 0.000001
+dat$c.absorb <- dat$toc.k2so4 - dat$toc.h2o
+dat$n.absorb <- dat$tn.k2so4 - dat$tn.h2o
+dat$p.base <- dat$p.bicarb - dat$p.k2so4
+dat$p.base[dat$p.base<0] <- 0.000001
+
+##create a microbial c:n ratio
+dat$micro.cn <- dat$micro.c/dat$micro.n
+##create microbial c:p ratio
+dat$micro.cp <- dat$micro.c/dat$micro.p
+
+##Co2 produced per unit biomass C
+dat$resp.bioc <- dat$co2/dat$micro.c
+dat$resp.bioc[is.na(dat$fum.c)] <- NA
+##getting rid of values where microibal biomass C is below detection
+dat$resp.bioc[dat$micro.c < 0.001] <- NA
+
+##making a total of all measured enzyme activity
+dat$enz.tot <- dat$bg + dat$phos + dat$nag +dat$lap
+##total N acquiring enzyme activity
+dat$n.acquire <- dat$lap + dat$nag
+##Get rid of BG data from contamination date
+dat$bg[dat$datecode == "2016-07-13"] <- NA
+
+##normalizing enzyme activity by microbial biomass
+dat$bg.bioc <- dat$bg/dat$micro.c
+dat$bg.bioc[dat$micro.c < 0.001] <- NA
+dat$lap.bioc <- dat$lap/dat$micro.c
+dat$lap.bioc[dat$micro.c < 0.001] <- NA
+dat$nag.bioc <- dat$nag/dat$micro.c
+dat$nag.bioc[dat$micro.c < 0.001] <- NA
+dat$phos.bioc <- dat$phos/dat$micro.c
+dat$phos.bioc[dat$micro.c < 0.001] <- NA
+
+##making a column that is the p.h2o:p.bicarb
+dat$p.h2o_bicarb <- dat$p.h2o/dat$p.bicarb
+##comparing p.h2o by total p
+dat$p.h2o_total <- dat$p.h2o/dat$p.total
+##p.k2so4 over p.total
+dat$p.k2so4_total <- dat$p.k2so4/dat$p.total
+dat$p.bicarb_total <- dat$p.bicarb/dat$p.total
+##bound P
+dat$p.bound <- dat$p.total - (dat$p.bicarb + dat$micro.p)
+##labile P that isn't adsorbed or non-adsorbed
+dat$p.labile.other <- dat$p.bicarb - (dat$p.absorb + dat$p.h2o)
+##absorbed p over  total
+dat$p.absorb_total <- dat$p.absorb/dat$p.total
+##p microbial/ total
+dat$micro.p_total <- dat$micro.p/dat$p.total
+dat$p.base_total <- dat$p.base/dat$p.total
+dat$p.bound_total <- dat$p.bound/dat$p.total
+dat$micro.p_total <- dat$micro.p/dat$p.total
+
+##create a variable for moisture content (which is 1-dry weight)
+dat$moist <- 1 - dat$gdry_gwet
+dat$moist[dat$moist < 0] <- NA
+dat$moist.percent <- 100*dat$moist
+##read in resin strip data
+resin <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/summary.Na_addition.resin.csv")
+resin[resin=="NR"] <- NA
+resin[resin=="NS"] <- NA
+resin$toc.resin <- as.numeric(as.character(resin$toc.resin))
+resin$tn.resin <- as.numeric(as.character(resin$tn.resin))
+resin$p.resin <- as.numeric(as.character(resin$p.resin))
+resin$toc.resin_sum <- resin$toc.resin * resin$days
+resin$tn.resin_sum <- resin$tn.resin* resin$days
+resin$p_sum.resin <- resin$p.resin * resin$days
+
+##invert dat
+
+##community data
+com <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/community_all.csv")
+com$plot <- NULL
+colnames(com)[1] <- "plot"
+
+##making variables more readable
+com$treatment <- as.character(com$treatment)
+com[com == "control"] <- "Control"
+com[com == "na"] <- "Na"
+com[com == "corn"] <- "Stover"
+com[com == "both"] <- "Stover & Na"
+com$treatment <- as.factor(com$treatment)
+com$na <- NA
+com$na[com$treatment == "Control"] <- F
+com$na[com$treatment == "Na"] <- T
+com$na[com$treatment == "Stover"] <- F
+com$na[com$treatment == "Stover & Na"] <- T
+com$na <- as.factor(com$na)
+
+com$stover <- NA
+com$stover[com$treatment == "Control"] <- F
+com$stover[com$treatment == "Na"] <- F
+com$stover[com$treatment == "Stover"] <- T
+com$stover[com$treatment == "Stover & Na"] <- T
+com$stover <- as.factor(com$stover)
+##adding block to com data
+com$block <- NA
+com$block[com$plot <= 4] <- 1
+com$block[com$plot > 4 & com$plot <= 8] <- 2
+com$block[com$plot > 8 & com$plot <= 12] <- 3
+com$block[com$plot > 12 & com$plot <= 16] <- 4
+com$block[com$plot > 16 & com$plot <= 20] <- 5
+com$block[com$plot > 20 & com$plot <= 24] <- 6
+com$block[com$plot > 24 & com$plot <= 28] <- 7
+com$block[com$plot > 28 & com$plot <= 32] <- 8
+com$block[com$plot > 32 & com$plot <= 36] <- 9
+com$block[com$plot > 36 & com$plot <= 40] <- 10
+com$block[com$plot > 40 & com$plot <= 44] <- 11
+com$block[com$plot > 44 & com$plot <= 48] <- 12
+```
+
+##combining invert and soil nutrient data
+
+###sum all of the invert data for each plot for all of the dates
+```{r}
+com.melted <- melt(com, id.vars = c("plot", "treatment", "field", "na", "stover", "date", "block"))
+com.plot <- cast(com.melted, plot + field + treatment + block~variable, sum, na.rm=T)
+com.average <- cast(com.melted, plot + field + treatment + block ~ variable, mean, na.rm = T)
+##making variables more readable
+com.plot$treatment <- as.character(com.plot$treatment)
+com.plot[com.plot == "control"] <- "Control"
+com.plot[com.plot == "na"] <- "Na"
+com.plot[com.plot == "corn"] <- "Stover"
+com.plot[com.plot == "both"] <- "Stover & Na"
+com.plot$treatment <- as.factor(com.plot$treatment)
+```
+
+
+
+##create a column in the soils data that is the average capture rate of inverts
+```{r}
+dat$abundance <- rep(com.average$abundance, times = 3)
+```
+
+
+##creating a subset for each sampling date for soil samples
+
+```{r}
+dat.b1 <- subset(dat, bout == "20160714")
+dat.b2 <- subset(dat, bout == "20160910")
+dat.b3 <- subset(dat, bout == "20160930")
+```
+
+
+##get a cumulative resin value
+```{r}
+colnames(resin)[2] <- "plot"
+resin.melted <- melt(resin, id.vars = c("date", "plot", "block", "field", "treatment", "na", "stover"))
+resin.sum <- cast(resin.melted, plot  ~ variable, fun.aggregate = sum)
+```
+
+##getting averages of soil nutrient data
+```{r}
+colnames(dat)[3] <- "plot"
+dat.melted <- melt(dat, id.vars = c("bout", "datecode", "plot", "block", "field", "treatment", "treat.na", "treat.stover"))
+dat.melted$value <- as.numeric(dat.melted$value)
+dat.plot <- cast(dat.melted, plot + field + treatment + block + treat.na + treat.stover ~ variable, fun.aggregate = mean, na.action = na.rm)
+dat.plot$p.total.begin <- dat$p.total[dat$bout == 20160714]
+dat.plot$p.total.end <- dat$p.total[dat$bout == 20160930]
+dat.plot$p.total.change <- dat.plot$p.total.begin - dat.plot$p.total.end
+dat.plot$p.h2o.begin <- dat$p.h2o[dat$bout == 20160714]
+dat.plot$p.h2o.end <- dat$p.h2o[dat$bout == 20160930]
+dat.plot$p.h2o.change <- dat.plot$p.h2o.begin - dat.plot$p.h2o.end
+dat.plot$p.bicarb.begin <- dat$p.bicarb[dat$bout == 20160714]
+dat.plot$p.bicarb.end <- dat$p.bicarb[dat$bout == 20160930]
+dat.plot$p.bicarb.change <- dat.plot$p.bicarb.begin - dat.plot$p.bicarb.end
+dat.plot$p.k2so4.begin <- dat$p.k2so4[dat$bout == 20160714]
+dat.plot$p.k2so4.end <- dat$p.k2so4[dat$bout == 20160930]
+dat.plot$p.k2so4.change <- dat.plot$p.k2so4.begin-dat.plot$p.k2so4.end
+dat.plot$p.absorb.begin <- dat$p.absorb[dat$bout == 20160714]
+dat.plot$p.absorb.end <- dat$p.absorb[dat$bout == 20160930]
+dat.plot$p.absorb.change <- dat.plot$p.absorb.begin-dat.plot$p.absorb.end
+dat.plot$p.base.begin <- dat$p.base[dat$bout == 20160714]
+dat.plot$p.base.end <- dat$p.base[dat$bout == 20160930]
+dat.plot$p.base.change <- dat.plot$p.base.begin-dat.plot$p.base.end
+dat.plot$p.bound.begin <- dat$p.bound[dat$bout == 20160714]
+dat.plot$p.bound.end <- dat$p.bound[dat$bout == 20160930]
+dat.plot$p.bound.change <- dat.plot$p.bound.begin-dat.plot$p.bound.end
+dat.plot$p.total.average <- (dat$p.total[dat$bout == 20160714] + dat$p.total[dat$bout == 20160930])/2
+dat.plot$c.percent.average <- (dat$c.percent[dat$bout == 20160714] + dat$c.percent[dat$bout == 20160930])/2
+dat.plot$n.percent.average <- (dat$n.percent[dat$bout == 20160714] + dat$n.percent[dat$bout == 20160930])/2
+dat.plot$p.h2o_p.total <- (dat$p.h2o_total[dat$bout == 20160714] + dat$p.h2o_total[dat$bout == 20160930])/2
+dat.plot$p.absorb_total <- (dat$p.absorb_total[dat$bout == 20160714]+ dat$p.absorb_total[dat$bout == 20160930])/2
+dat.plot$p.bicarb_total <- (dat$p.bicarb_total[dat$bout == 20160714]+ dat$p.bicarb_total[dat$bout == 20160930])/2
+dat.plot$p.base_total <- (dat$p.base_total[dat$bout == 20160714]+ dat$p.base_total[dat$bout == 20160930])/2
+dat.plot$p.bound_total <- (dat$p.bound_total[dat$bout == 20160714]+ dat$p.bound_total[dat$bout == 20160930])/2
+dat.plot$toc.k2so4.begin <- dat$toc.k2so4[dat$bout == 20160714]
+dat.plot$toc.k2so4.end <- dat$toc.k2so4[dat$bout == 20160930]
+dat.plot$toc.k2so4.change <- dat.plot$toc.k2so4.end - dat.plot$toc.k2so4.begin
+bwplot(toc.k2so4.change ~ treatment, data = dat.plot)
+```
+
+##functional group and taxa
+```{r}
+group <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/functional.group_all.csv")
+group$treatment <- as.character(group$treatment)
+group[group == "control"] <- "Control"
+group[group == "na"] <- "Na"
+group[group == "corn"] <- "Stover"
+group[group == "both"] <- "Stover & Na"
+group$treatment <- factor(group$treatment)
+group$treat.stover <- NA
+group$treat.stover[group$treatment == "Na" | group$treatment == "Control"] <- 0
+group$treat.stover[group$treatment == "Stover" | group$treatment == "Stover & Na"] <- 1
+group$treat.stover <- factor(group$treat.stover)
+group$treat.na <- NA
+group$treat.na[group$treatment == "Control" | group$treatment == "Stover"] <- 0
+group$treat.na[group$treatment == "Na" | group$treatment == "Stover & Na"] <- 1
+group$treat.na <- factor(group$treat.na)
+order <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/order_all.csv")
+group.melted <- melt(group, id.vars = c("plot.number", "plot", "date", "treatment", "field"))
+group.melted$value <- as.numeric(group.melted$value)
+group.sum <- cast(group.melted, plot.number + treatment + field ~ variable, fun.aggregate = sum)
+group.sum$abundance <- com.plot$abundance
+group.sum$block <- NA
+group.sum$block[group.sum$plot.number <= 4] <- 1
+group.sum$block[group.sum$plot.number > 4 & group.sum$plot.number <= 8] <- 2
+group.sum$block[group.sum$plot.number > 8 & group.sum$plot.number <= 12] <- 3
+group.sum$block[group.sum$plot.number > 12 & group.sum$plot.number <= 16] <- 4
+group.sum$block[group.sum$plot.number > 16 & group.sum$plot.number <= 20] <- 5
+group.sum$block[group.sum$plot.number > 20 & group.sum$plot.number <= 24] <- 6
+group.sum$block[group.sum$plot.number > 24 & group.sum$plot.number <= 28] <- 7
+group.sum$block[group.sum$plot.number > 28 & group.sum$plot.number <= 32] <- 8
+group.sum$block[group.sum$plot.number > 32 & group.sum$plot.number <= 36] <- 9
+group.sum$block[group.sum$plot.number > 36 & group.sum$plot.number <= 40] <- 10
+group.sum$block[group.sum$plot.number > 40 & group.sum$plot.number <= 44] <- 11
+group.sum$block[group.sum$plot.number > 44 & group.sum$plot.number <= 48] <- 12
+group.sum$block <- as.factor(group.sum$block)
+family <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/family_all.csv")
+```
+##merging inverts and nutrient data, merges average soil nutrient values with cumulative abundance
+```{r}
+dc.plot <- merge(com.plot, dat.plot, by = c("plot", "field", "treatment"))
+dc.plot <- merge(dc.plot, resin.sum, by = c("plot"))
+dc.plot$p.total <- (dat.b1$p.total + dat.b3$p.total)/2
+colnames(dc.plot)[3] <- "treatment"
+colnames(group.sum)[1] <- "plot"
+dc.plot <- merge(dc.plot, group.sum, by = "plot")
+dc.plot$block.y <- NULL
+dc.plot$predator <- group.sum$predator
+dc.plot$herbivore <- group.sum$herbivore
+dc.plot$scavenger <- group.sum$scavenger
+dc.plot$field.y <- NULL
+colnames(dc.plot)[2] <- "field"
+colnames(dc.plot)[3]  <- "treatment"
+dc.plot$block.y <- NULL
+```
+
+
+##functional group and taxa
+```{r}
+group <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/functional.group_all.csv")
+group$treatment <- as.character(group$treatment)
+group[group == "control"] <- "Control"
+group[group == "na"] <- "Na"
+group[group == "corn"] <- "Stover"
+group[group == "both"] <- "Stover & Na"
+group$treatment <- factor(group$treatment)
+group$treat.stover <- NA
+group$treat.stover[group$treatment == "Na" | group$treatment == "Control"] <- 0
+group$treat.stover[group$treatment == "Stover" | group$treatment == "Stover & Na"] <- 1
+group$treat.stover <- factor(group$treat.stover)
+group$treat.na <- NA
+group$treat.na[group$treatment == "Control" | group$treatment == "Stover"] <- 0
+group$treat.na[group$treatment == "Na" | group$treatment == "Stover & Na"] <- 1
+group$treat.na <- factor(group$treat.na)
+order <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/order_all.csv")
+group.melted <- melt(group, id.vars = c("plot.number", "plot", "date", "treatment", "field"))
+group.melted$value <- as.numeric(group.melted$value)
+group.sum <- cast(group.melted, plot.number + treatment + field ~ variable, fun.aggregate = sum)
+group.sum$abundance <- com.plot$abundance
+group.sum$block <- NA
+group.sum$block[group.sum$plot.number <= 4] <- 1
+group.sum$block[group.sum$plot.number > 4 & group.sum$plot.number <= 8] <- 2
+group.sum$block[group.sum$plot.number > 8 & group.sum$plot.number <= 12] <- 3
+group.sum$block[group.sum$plot.number > 12 & group.sum$plot.number <= 16] <- 4
+group.sum$block[group.sum$plot.number > 16 & group.sum$plot.number <= 20] <- 5
+group.sum$block[group.sum$plot.number > 20 & group.sum$plot.number <= 24] <- 6
+group.sum$block[group.sum$plot.number > 24 & group.sum$plot.number <= 28] <- 7
+group.sum$block[group.sum$plot.number > 28 & group.sum$plot.number <= 32] <- 8
+group.sum$block[group.sum$plot.number > 32 & group.sum$plot.number <= 36] <- 9
+group.sum$block[group.sum$plot.number > 36 & group.sum$plot.number <= 40] <- 10
+group.sum$block[group.sum$plot.number > 40 & group.sum$plot.number <= 44] <- 11
+group.sum$block[group.sum$plot.number > 44 & group.sum$plot.number <= 48] <- 12
+group.sum$block <- as.factor(group.sum$block)
+family <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/family_all.csv")
+```
+
+
+
+##creating columns for vector analysis
+```{r}
+dat$enz.c_p <- dat$bg/(dat$phos + dat$bg)
+dat$enz.c_n <- dat$bg/(dat$n.acquire + dat$bg)
+dat$vector.length <- sqrt((dat$enz.c_p)^2 + (dat$enz.c_n))
+dat$vector.angle_radian <- atan2(dat$enz.c_n, dat$enz.c_p)
+dat$vector.angle <- (dat$vector.angle_radian * 180)/pi
+```
+
+##importing decomp bag data invert data
+```{r}
+decomp.inv <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/decomp.bags_summary.csv")
+```
+
+##importing decomp bag mass loss data
+```{r}
+decomp.OM <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/bag.decomp.csv")
+```
+##merging litterbag decomp and invert data
+```{r}
+decomp.all <- merge(decomp.inv, decomp.OM, by = c("plot", "field", "treatment"))
+```
+
