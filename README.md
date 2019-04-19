@@ -71,7 +71,7 @@ functional.group_all.csv - data on the functional groups of the invertebrates ca
 
 order_all.csv - data on order composition of invertebrates caught in pitfall traps 
 	
-notes on invert species - notes from the Pelini Lab on  the invertebrate species caught
+notes on invert species - notes from the Pelini Lab on  the invertebrate species
 
 
 Decomp bag data files:
