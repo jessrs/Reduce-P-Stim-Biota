@@ -8,6 +8,7 @@ Description of files:
 
 Soil data files:
 summary.Na_addition.resin.csv - concentrations of C  N  and P concentrations from the resin strips using the methods described in the paper Can we reduce phosphorus runoff from agricultural fields by stimulating soil biota?
+	
 	Key to column titles
 		Date - Date sample taken coded as YYYYMMDD
 		sample - Indicates the plot number
