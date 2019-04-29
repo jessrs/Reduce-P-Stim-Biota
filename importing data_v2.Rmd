@@ -365,29 +365,3 @@ group.sum$block[group.sum$plot.number > 44 & group.sum$plot.number <= 48] <- 12
 group.sum$block <- as.factor(group.sum$block)
 family <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/family_all.csv")
 ```
-
-
-
-##creating columns for vector analysis
-```{r}
-dat$enz.c_p <- dat$bg/(dat$phos + dat$bg)
-dat$enz.c_n <- dat$bg/(dat$n.acquire + dat$bg)
-dat$vector.length <- sqrt((dat$enz.c_p)^2 + (dat$enz.c_n))
-dat$vector.angle_radian <- atan2(dat$enz.c_n, dat$enz.c_p)
-dat$vector.angle <- (dat$vector.angle_radian * 180)/pi
-```
-
-##importing decomp bag data invert data
-```{r}
-decomp.inv <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/decomp.bags_summary.csv")
-```
-
-##importing decomp bag mass loss data
-```{r}
-decomp.OM <- read.csv("/Users/Jessica/Box Sync/ESE Lab Stuff/Susser/data NaP/2016 field season/data/bag.decomp.csv")
-```
-##merging litterbag decomp and invert data
-```{r}
-decomp.all <- merge(decomp.inv, decomp.OM, by = c("plot", "field", "treatment"))
-```
-
