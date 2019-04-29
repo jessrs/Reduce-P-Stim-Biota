@@ -73,14 +73,6 @@ order_all.csv - data on order composition of invertebrates caught in pitfall tra
 	
 notes on invert species - notes from the Pelini Lab on  the invertebrate species
 
-
-Decomp bag data files:
-
-bag.decomp.csv - Organic matter (determined by combustion) present in the decomposition bags at the end of the experiment 
-
-decomp.bags_summary.csv - Data on invertebrates harvested from decomposition bags 
-
-
 R code:
 
 importing data_v2.Rmd - the rcode used to import and clean up data for further analysis 
